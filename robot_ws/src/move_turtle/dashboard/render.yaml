@@ -1,0 +1,20 @@
+# Render.com 배포 설정 파일 (선택사항)
+# 이 파일을 사용하면 웹 UI에서 설정할 필요 없이 자동으로 배포됩니다
+
+services:
+  - type: web
+    name: robot-dashboard
+    env: docker
+    dockerfilePath: ./dashboard/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: NAVER_CLIENT_ID
+        sync: false  # 수동으로 설정 필요
+      - key: NAVER_CLIENT_SECRET
+        sync: false  # 수동으로 설정 필요
+      - key: NAVER_MAP_CLIENT_ID
+        sync: false  # 수동으로 설정 필요
+      - key: FLASK_DEBUG
+        value: "False"
+    healthCheckPath: /
+

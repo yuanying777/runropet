@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>RUN ROPET</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ cache_bust }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+  <header>
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="car" id="carModeBtn">
+        <i class="fas fa-car-side"></i> 차선도로
+      </button>
+      <button class="mode-btn" data-mode="walk" id="walkModeBtn">
+        <i class="fas fa-walking"></i> 도보도로
+      </button>
+      <span class="header-divider">|</span>
+      <button class="header-help-btn" id="helpBtn">
+        <i class="fas fa-file-alt"></i> 사용 설명
+      </button>
+    </div>
+    <span class="header-title">RUN ROPET</span>
+    <div style="width: 200px;"></div> <!-- 오른쪽 공간 채우기 -->
+  </header>
+  <main>
+    <div class="dashboard-grid">
+      <!-- 1행: 스텝1, 스텝2, 스텝3, 카메라 섹션 (높이 1/3, 4열) -->
+      <div class="row row-1">
+      <section class="panel" id="step1">
+        <h2>
+          STEP 01 목표 입력
+          <div class="scale-control">
+            <span id="speedTag" class="info-pill">0.1m/s</span>
+            <span id="scaleTag" class="info-pill">--</span>
+            <span id="scaleModeTag" class="mode-tag">DOWN</span>
+            <button class="secondary" id="scaleBtn">SCALE ⚙︎</button>
+          </div>
+        </h2>
+        <!-- 차선도로 모드 -->
+        <form id="routeForm" class="route-mode active">
+          <div class="inputs-grid">
+            <div>
+              <label>출발지</label>
+              <input type="text" name="start_address" value="" required>
+            </div>
+            <div>
+              <label>도착지</label>
+              <input type="text" name="goal_address" value="" required>
+            </div>
+          </div>
+          <input type="hidden" name="width" id="scaleWidth" value="{{ settings.scale_width }}">
+          <input type="hidden" name="height" id="scaleHeight" value="{{ settings.scale_height }}">
+          <input type="hidden" id="movementMode" value="{{ settings.mode }}">
+          <input type="hidden" id="movementSpeed" value="{{ settings.scale_speed if settings.mode == 'scale' else settings.real_speed }}">
+          <div style="margin-top: 16px;">
+            <button class="primary" type="submit" style="width: 100%;">경로 생성</button>
+          </div>
+        </form>
+        <!-- 도보도로 모드 -->
+        <div id="walkingMode" class="route-mode">
+          <div style="margin-bottom: 16px;">
+            <label>링크 입력</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="walkingUrlInput" placeholder="네이버 지도 링크를 붙여넣으세요" style="flex: 1;">
+              <button class="primary" id="crawlBtn">경로 생성</button>
+            </div>
+            <p style="font-size: 0.85em; color: #666; margin-top: 8px;">
+              출발지와 도착지의 최종 경로가 있는 네이버 지도의 페이지의 링크를 복사해서 붙여 넣으세요.
+            </p>
+          </div>
+          <div class="progress-container" id="crawlProgressContainer">
+            <div class="progress-label">
+              <span>진행도</span>
+              <span id="crawlProgressText">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="crawlProgressFill"></div>
+            </div>
+          </div>
+          <!-- 횡단보도 입력 섹션 -->
+          <div id="crosswalkSection" style="display: none; margin-top: 16px; padding: 16px; background: #f5f8ff; border-radius: 12px;">
+            <div id="crosswalkText" style="font-weight: 600; margin-bottom: 12px; color: var(--blue);"></div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label style="flex-shrink: 0;">각도를 입력하세요:</label>
+              <input type="number" id="crosswalkAngleInput" placeholder="0/90/-90" style="flex: 1;" min="-90" max="90" step="90">
+              <button class="primary" id="crosswalkNextBtn">다음</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="step2">
+        <h2>
+          STEP 02 경로 계획
+          <button class="primary step2-download-btn" type="button" id="downloadBtn">
+            move_path.py <i class="fas fa-download"></i>
+          </button>
+        </h2>
+        <div class="step2-content">
+          <div class="step2-preview">
+            <img id="routePreviewImage" alt="경로 시각화 이미지">
+            <div id="routePreviewPlaceholder" class="step2-preview-placeholder">
+              경로 시각화 이미지
+            </div>
+          </div>
+          <div class="command-list" id="commandsList">
+            <div class="command-list-placeholder">경로 추출 로직</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="step3">
+        <h2>
+          STEP 03 내 로봇 연동
+          <div class="step3-download-buttons">
+            <a href="/api/download-robot-test" class="step3-download-btn" download>
+              robot_test <i class="fas fa-download"></i>
+            </a>
+            <a href="/api/download-robot-move" class="step3-download-btn" download>
+              robot_move <i class="fas fa-download"></i>
+            </a>
+          </div>
+        </h2>
+        <div class="step3-grid">
+          <form id="connectForm" class="step3-form">
+            <div class="step3-field">
+              <label for="robot_ip">로봇 IP</label>
+              <input type="text" name="robot_ip" id="robot_ip" placeholder="192.168.x.x" required>
+            </div>
+            <div class="step3-field">
+              <label for="robot_id">로봇 ID</label>
+              <input type="text" name="username" id="robot_id" placeholder="ubuntu" required>
+            </div>
+            <div class="step3-field">
+              <label for="robot_pw">로봇 PW</label>
+              <input type="password" name="password" id="robot_pw" placeholder="비밀번호" required>
+            </div>
+            <div class="step3-field">
+              <label for="domain_id">DOMAIN ID</label>
+              <input type="number" name="domain_id" id="domain_id" placeholder="0" min="0">
+            </div>
+          </form>
+          <div class="step3-buttons">
+            <button class="step3-btn step3-btn--primary" type="submit" form="connectForm" id="connectBtn">
+              <span>로봇 연동</span>
+            </button>
+            <button class="step3-btn step3-btn--test" id="testBtn"><span>TEST</span></button>
+            <button class="step3-btn step3-btn--primary" id="startDriveBtn"><span>주행 시작</span></button>
+          </div>
+        </div>
+        <div class="step3-status" id="step3Status">상태 메시지가 여기에 표시됩니다.</div>
+      </section>
+
+      <section class="panel" id="cameraSection">
+        <h2>
+          카메라
+          <div class="camera-toggle-container">
+            <span class="camera-toggle-label" id="cameraToggleLabel">OFF</span>
+            <label class="camera-toggle-switch">
+              <input type="checkbox" id="cameraToggle">
+              <span class="camera-toggle-slider"></span>
+            </label>
+          </div>
+        </h2>
+        <div class="camera-block">
+          <video id="cameraFeed" class="camera-feed" loop muted playsinline>
+            <source src="{{ url_for('static', filename='videos/camera_placeholder.mp4') }}" type="video/mp4">
+            카메라 피드 영역
+          </video>
+        </div>
+      </section>
+      </div>
+
+      <!-- 2행: 지도 iframe, 스텝4 (높이 2/3, 2열) -->
+      <div class="row row-2">
+      <section class="panel" id="naverMapSection" style="padding: 0; position: relative;">
+        <button class="link-copy-btn" id="copyLinkBtn" title="새 브라우저에서 열기 및 링크 복사">새 브라우저에서 열기</button>
+        <iframe id="naverMapFrame" src="https://map.naver.com/p/directions" style="width:100%; height:100%; border-radius:18px; border: none;"></iframe>
+      </section>
+
+      <section class="panel" id="step4">
+        <h2>
+          STEP 04 로봇 실행
+        </h2>
+        <div class="command-list" id="executionCommandsList">
+          <p>경로 실행 상황이 여기에 표시됩니다.</p>
+        </div>
+      </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scale Modal -->
+  <div class="modal" id="scaleModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="scaleModalCloseBtn">&times;</button>
+      <div class="toggle">
+        <button data-mode="scale" class="{{ 'active' if settings.mode == 'scale' else '' }}">SCALE ↓</button>
+        <button data-mode="real" class="{{ 'active' if settings.mode == 'real' else '' }}">REAL</button>
+      </div>
+      <div id="scaleInputs" class="mode-panel">
+        <label class="modal-section-title">로봇 속도 (m/s)</label>
+        <input type="number" step="0.01" id="modalScaleSpeed" value="{{ settings.scale_speed }}" placeholder="0.1">
+        <label class="modal-section-title">가용 면적 입력 (m)</label>
+        <div class="modal-grid">
+          <div class="modal-input-inline">
+            <span class="modal-label-inline">길<br>이</span>
+            <input type="number" step="0.1" id="modalWidth" value="{{ settings.scale_width }}" placeholder="0">
+          </div>
+          <div class="modal-input-inline">
+            <span class="modal-label-inline">너<br>비</span>
+            <input type="number" step="0.1" id="modalHeight" value="{{ settings.scale_height }}" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <div id="realInputs" class="mode-panel" style="display:none;">
+        <label class="modal-section-title">로봇 속도 (m/s)</label>
+        <input type="number" step="0.01" id="modalRealSpeed" value="{{ settings.real_speed }}" placeholder="0.2">
+        <div class="alert-text">횡단보도 구간 주의!!!</div>
+        <div class="alert-sub">횡단보도 인식이 아직 탑재되지 않았습니다.</div>
+      </div>
+      <button class="primary" id="scaleSaveBtn">저장</button>
+    </div>
+  </div>
+
+  <!-- Test Modal -->
+  <div class="modal" id="testModal">
+    <div class="modal-card">
+      <p id="testModalText">전진 30cm 토픽이 발행되었습니다.</p>
+      <button class="primary modal-close">확인</button>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div class="modal" id="helpModal">
+    <div class="modal-card help-modal-card">
+      <button class="modal-close-btn" id="helpModalCloseBtn">&times;</button>
+      <h2 style="color: var(--blue); margin-bottom: 24px; font-size: 28px; font-weight: 700;">사용 설명</h2>
+      
+      <!-- 로봇 PC 설치 필수 파일 -->
+      <div class="help-required-box">
+        <div class="help-required-title">
+          <i class="fas fa-exclamation-triangle" style="color: #ff9800; margin-right: 8px;"></i>
+          <strong>로봇 PC에 설치 필수 파일 (2개)</strong>
+        </div>
+        <div class="help-required-files">
+          <a href="/api/download-robot-test" class="help-required-file" download>test_move_command.py</a>
+          <span class="help-required-separator">+</span>
+          <a href="/api/download-robot-move" class="help-required-file" download>move_full_path.py</a>
+        </div>
+        <p class="help-required-note">
+          위 2개 파일을 <code>~/robot_ws/src/move_turtle/</code> 경로에 복사해야 RUN ROPET에서 원격 조종이 가능합니다.
+        </p>
+      </div>
+      
+      <!-- 다운로드 파일 설명 -->
+      <div class="help-section">
+        <h3 class="help-section-title">
+          <i class="fas fa-download" style="color: var(--blue); margin-right: 8px;"></i>
+          다운로드 파일
+        </h3>
+        
+        <div class="help-item">
+          <div class="help-item-header">
+            <span class="help-badge">STEP 02</span>
+            <strong class="help-file-name">move_path.py</strong>
+          </div>
+          <p class="help-description">
+            RUN ROPET 없이 별도로 테스트해볼 수 있는 파일입니다. 해당 파일을 설치하지 않아도 RUN ROPET에서 원격으로 조종이 가능합니다.
+          </p>
+        </div>
+
+        <div class="help-item">
+          <div class="help-item-header">
+            <span class="help-badge">STEP 03</span>
+            <strong class="help-file-name">test_move_command.py</strong>
+          </div>
+          <p class="help-description">
+            로봇 연결 테스트용 파일입니다. <strong>로봇 PC에 설치</strong> 후 실행하면 30cm 직진 동작을 수행합니다.
+          </p>
+        </div>
+
+        <div class="help-item">
+          <div class="help-item-header">
+            <span class="help-badge">STEP 03</span>
+            <strong class="help-file-name">move_full_path.py</strong>
+          </div>
+          <p class="help-description">
+            전체 경로 실행용 파일입니다. <strong>로봇 PC에 설치</strong> 후 "주행 시작" 버튼 클릭 시 원격으로 실행됩니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- 사용 환경 -->
+      <div class="help-section">
+        <h3 class="help-section-title">
+          <i class="fas fa-server" style="color: var(--blue); margin-right: 8px;"></i>
+          사용 환경
+        </h3>
+        <div class="help-env-box">
+          <div class="help-env-item">
+            <strong>로봇 PC:</strong> ROS2 (Humble/Foxy), Python 3.8+
+          </div>
+          <div class="help-env-item">
+            <strong>로컬 PC:</strong> Python 3.8+, 웹 브라우저
+          </div>
+        </div>
+      </div>
+
+      <!-- 폴더 구조 -->
+      <div class="help-section">
+        <h3 class="help-section-title">
+          <i class="fas fa-folder-tree" style="color: var(--blue); margin-right: 8px;"></i>
+          로봇 PC 폴더 구조
+        </h3>
+        <div class="help-code-box">
+          <code>
+            ~/robot_ws/src/move_turtle/<br>
+            ├── test_move_command.py<br>
+            └── move_full_path.py
+          </code>
+        </div>
+        <p class="help-note">
+          <i class="fas fa-info-circle" style="color: var(--blue); margin-right: 6px;"></i>
+          <strong>중요:</strong> STEP 03에서 다운로드한 2개 파일만 위 경로에 복사하면 됩니다. 나머지 파일들은 서버에서 제공됩니다.
+        </p>
+      </div>
+
+      <!-- 사용 프로세스 -->
+      <div class="help-section">
+        <h3 class="help-section-title">
+          <i class="fas fa-list-ol" style="color: var(--blue); margin-right: 8px;"></i>
+          사용 프로세스
+        </h3>
+        <div class="help-process">
+          <div class="help-process-step">
+            <span class="help-step-number">1</span>
+            <div class="help-step-content">
+              <strong>STEP 01:</strong> 출발지/도착지 입력 후 "경로 생성" 클릭
+            </div>
+          </div>
+          <div class="help-process-step">
+            <span class="help-step-number">2</span>
+            <div class="help-step-content">
+              <strong>STEP 02:</strong> 생성된 경로 확인 후 <code>move_path.py</code> 다운로드 (선택사항)
+            </div>
+          </div>
+          <div class="help-process-step">
+            <span class="help-step-number">3</span>
+            <div class="help-step-content">
+              <strong>STEP 03:</strong> 
+              <ul style="margin: 8px 0 0 20px; padding: 0;">
+                <li>로봇 정보 입력 후 "로봇 연동" 클릭</li>
+                <li><code>test_move_command.py</code>, <code>move_full_path.py</code> 다운로드</li>
+                <li>다운로드한 파일을 로봇 PC의 <code>~/robot_ws/src/move_turtle/</code> 경로에 복사</li>
+                <li>"TEST" 버튼으로 연결 확인</li>
+                <li>"주행 시작" 버튼으로 경로 실행</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Link Copy Guide Modal -->
+  <div class="modal" id="linkCopyModal">
+    <div class="modal-card">
+      <div class="alert-text">링크 복사 안내</div>
+      <div class="alert-sub" style="text-align: left; margin-top: 16px;">
+        iframe 내부의 실제 경로 URL을 복사하려면:<br><br>
+        <strong>방법 1:</strong> iframe 내부 네이버 지도에서<br>
+        &nbsp;&nbsp;→ 상단 "공유" 버튼 클릭<br>
+        &nbsp;&nbsp;→ 링크 복사<br><br>
+        <strong>방법 2:</strong> 브라우저 주소창에서<br>
+        &nbsp;&nbsp;→ 네이버 지도를 새 탭에서 열기<br>
+        &nbsp;&nbsp;→ 주소창의 URL 복사<br><br>
+        <strong>현재 복사된 URL:</strong><br>
+        <code id="copiedUrl" style="display: block; margin-top: 8px; padding: 8px; background: #f5f8ff; border-radius: 8px; word-break: break-all; font-size: 12px;"></code>
+      </div>
+      <button class="primary modal-close" style="margin-top: 20px;">확인</button>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}?v={{ cache_bust }}"></script>
+</body>
+
+</html>
+
