@@ -145,6 +145,10 @@
               <label for="domain_id">DOMAIN ID</label>
               <input type="number" name="domain_id" id="domain_id" placeholder="0" min="0">
             </div>
+            <div class="step3-field">
+              <label for="ssh_port">SSH 포트</label>
+              <input type="number" name="ssh_port" id="ssh_port" placeholder="22" min="1" max="65535" value="22">
+            </div>
           </form>
           <div class="step3-buttons">
             <button class="step3-btn step3-btn--primary" type="submit" form="connectForm" id="connectBtn">
