@@ -29,7 +29,7 @@ def _check_port_open(host: str, port: int, timeout: int = 3) -> Tuple[bool, str]
         return False, f"포트 확인 중 오류: {e}"
 
 
-def _run_remote_command(robot_ip: str, username: str, password: str, command: str) -> Tuple[bool, str, str]:
+def _run_remote_command(robot_ip: str, username: str, password: str, command: str, port: int = 22) -> Tuple[bool, str, str]:
     """Execute a command on the remote robot via SSH."""
     ssh = None
     try:
@@ -40,6 +40,7 @@ def _run_remote_command(robot_ip: str, username: str, password: str, command: st
         try:
             ssh.connect(
                 robot_ip,
+                port=port,
                 username=username,
                 password=password,
                 timeout=15,
@@ -52,14 +53,14 @@ def _run_remote_command(robot_ip: str, username: str, password: str, command: st
         except paramiko.SSHException as e:
             return False, "", f"SSH 연결 오류: {str(e)}\n\n가능한 원인:\n1. SSH 서비스가 실행 중인지 확인하세요\n2. 사용자명과 비밀번호가 올바른지 확인하세요"
         except socket.timeout:
-            return False, "", f"연결 타임아웃: {robot_ip}:22에 연결할 수 없습니다.\n\n가능한 원인:\n1. 로봇이 같은 네트워크에 연결되어 있는지 확인하세요\n2. 로봇 IP 주소가 올바른지 확인하세요\n3. 방화벽이 연결을 차단하고 있는지 확인하세요"
+            return False, "", f"연결 타임아웃: {robot_ip}:{port}에 연결할 수 없습니다.\n\n가능한 원인:\n1. 로봇이 같은 네트워크에 연결되어 있는지 확인하세요\n2. 로봇 IP 주소가 올바른지 확인하세요\n3. 방화벽이 연결을 차단하고 있는지 확인하세요"
         except socket.error as e:
             error_code = getattr(e, 'errno', None)
             error_msg = str(e)
             if error_code == 113 or "No route to host" in error_msg:
                 return False, "", f"네트워크 연결 실패: {robot_ip}에 도달할 수 없습니다.\n\n오류 코드: {error_code}\n오류: {error_msg}\n\n가능한 원인:\n1. 로봇 IP 주소 확인: {robot_ip}\n2. 같은 네트워크에 연결되어 있는지 확인\n3. VMware 네트워크 설정 확인\n4. 로봇이 켜져 있고 네트워크에 연결되어 있는지 확인"
             elif "Unable to connect" in error_msg or "Errno" in error_msg:
-                return False, "", f"연결 실패: {robot_ip}:22에 연결할 수 없습니다.\n\n오류 코드: {error_code}\n오류: {error_msg}\n\n가능한 원인:\n1. 로봇 IP 주소 확인: {robot_ip}\n2. 같은 네트워크에 연결되어 있는지 확인\n3. 로봇에서 SSH 서비스 실행 확인: sudo systemctl status ssh\n4. 방화벽 확인: sudo ufw status"
+                return False, "", f"연결 실패: {robot_ip}:{port}에 연결할 수 없습니다.\n\n오류 코드: {error_code}\n오류: {error_msg}\n\n가능한 원인:\n1. 로봇 IP 주소 확인: {robot_ip}\n2. SSH 포트 확인: {port}\n3. 같은 네트워크에 연결되어 있는지 확인\n4. 로봇에서 SSH 서비스 실행 확인: sudo systemctl status ssh\n5. 방화벽 확인: sudo ufw status"
             return False, "", f"SSH 연결 중 네트워크 오류: {error_msg} (코드: {error_code})"
         except Exception as e:
             error_msg = str(e)
@@ -131,7 +132,7 @@ def _run_remote_command(robot_ip: str, username: str, password: str, command: st
                 pass
 
 
-def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: int = 3) -> Tuple[bool, str, str]:
+def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: int = 3, ssh_port: int = 22) -> Tuple[bool, str, str]:
     """
     Run the robot bringup launch file remotely.
 
@@ -140,9 +141,10 @@ def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: 
         username: SSH username
         password: SSH password
         domain_id: ROS_DOMAIN_ID (default: 3)
+        ssh_port: SSH port (default: 22)
     """
     # 1) 중복 실행 방지: 이미 실행 중이면 바로 리턴
-    is_running, status_out, status_err = check_bringup_status(robot_ip, username, password)
+    is_running, status_out, status_err = check_bringup_status(robot_ip, username, password, ssh_port)
     if is_running:
         return True, "bringup already running", ""
 
@@ -156,7 +158,7 @@ def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: 
             echo "none"
         fi
     """
-    success_detect, ros2_distro, _ = _run_remote_command(robot_ip, username, password, detect_ros2_cmd)
+    success_detect, ros2_distro, _ = _run_remote_command(robot_ip, username, password, detect_ros2_cmd, ssh_port)
 
     if not success_detect or ros2_distro.strip() == "none":
         return False, "", "ROS2 distribution not found (neither humble nor foxy)"
@@ -170,7 +172,7 @@ def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: 
         sleep 2;
         echo 'Old processes killed'
     """
-    success_kill, out_kill, err_kill = _run_remote_command(robot_ip, username, password, cmd_kill)
+    success_kill, out_kill, err_kill = _run_remote_command(robot_ip, username, password, cmd_kill, ssh_port)
 
     # 3) 브링업 실행 및 PID 파일 기록
     cmd1 = f"""
@@ -187,7 +189,7 @@ def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: 
     """
 
     # 명령 실행
-    success1, out1, err1 = _run_remote_command(robot_ip, username, password, cmd1)
+    success1, out1, err1 = _run_remote_command(robot_ip, username, password, cmd1, ssh_port)
 
     # 프로세스 시작 대기
     time.sleep(5)
@@ -202,7 +204,7 @@ def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: 
             echo "not_running"
         fi
     """
-    success2, out2, err2 = _run_remote_command(robot_ip, username, password, check_cmd)
+    success2, out2, err2 = _run_remote_command(robot_ip, username, password, check_cmd, ssh_port)
 
     # 결과 합치기
     out = "=== Step 1: Bringup Execution ===\n"
@@ -224,7 +226,7 @@ def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: 
     return success, out, err
 
 
-def send_test_move(robot_ip: str, username: str, password: str, domain_id: int = 3) -> Tuple[bool, str, str]:
+def send_test_move(robot_ip: str, username: str, password: str, domain_id: int = 3, ssh_port: int = 22) -> Tuple[bool, str, str]:
     """
     Execute the local test_move_command script on the robot to publish a short forward command.
 
@@ -233,6 +235,7 @@ def send_test_move(robot_ip: str, username: str, password: str, domain_id: int =
         username: SSH username
         password: SSH password
         domain_id: ROS_DOMAIN_ID (default: 3)
+        ssh_port: SSH port (default: 22)
     """
     # ROS2 환경 설정 후 test_move_command.py 직접 실행
     cmd = (
@@ -244,7 +247,7 @@ def send_test_move(robot_ip: str, username: str, password: str, domain_id: int =
         "python3 ~/robot_ws/src/test_move_command.py 2>&1 && "
         "echo '=== Test Move Command End ==='"
     )
-    return _run_remote_command(robot_ip, username, password, cmd)
+    return _run_remote_command(robot_ip, username, password, cmd, ssh_port)
 
 
 # def run_precomputed_move(robot_ip: str, username: str, password: str, domain_id: int = 3,
@@ -304,7 +307,7 @@ def send_test_move(robot_ip: str, username: str, password: str, domain_id: int =
 
 
 def start_move_full_path(robot_ip: str, username: str, password: str, domain_id: str | None = None,
-                         json_path: str | None = None, commands_json: str | None = None) -> Tuple[bool, str, str]:
+                         json_path: str | None = None, commands_json: str | None = None, ssh_port: int = 22) -> Tuple[bool, str, str]:
     """
     Run move_full_path.py on the remote robot to execute the full planned route.
 
@@ -315,6 +318,7 @@ def start_move_full_path(robot_ip: str, username: str, password: str, domain_id:
         domain_id: ROS_DOMAIN_ID (optional)
         json_path: Path to JSON file for walking route (optional, for walk mode)
         commands_json: Path to JSON file for car route commands (optional, for car mode)
+        ssh_port: SSH port (default: 22)
     """
     domain_export = f"export ROS_DOMAIN_ID={domain_id} && " if domain_id not in (None, "", "default") else ""
 
@@ -334,10 +338,10 @@ def start_move_full_path(robot_ip: str, username: str, password: str, domain_id:
         f"{domain_export}"
         f"PYTHONPATH=~/robot_ws/src:$PYTHONPATH python3 src/move_full_path.py {args_str}"
     )
-    return _run_remote_command(robot_ip, username, password, cmd)
+    return _run_remote_command(robot_ip, username, password, cmd, ssh_port)
 
 
-def upload_json_file(robot_ip: str, username: str, password: str, json_data: Dict, remote_path: str) -> Tuple[bool, str, str]:
+def upload_json_file(robot_ip: str, username: str, password: str, json_data: Dict, remote_path: str, ssh_port: int = 22) -> Tuple[bool, str, str]:
     """
     Upload JSON data to remote robot via SFTP.
 
@@ -347,6 +351,7 @@ def upload_json_file(robot_ip: str, username: str, password: str, json_data: Dic
         password: SSH password
         json_data: JSON data to upload (dict)
         remote_path: Remote file path (e.g., "/tmp/walking_route.json")
+        ssh_port: SSH port (default: 22)
 
     Returns:
         (success, stdout, stderr)
@@ -359,6 +364,7 @@ def upload_json_file(robot_ip: str, username: str, password: str, json_data: Dic
         try:
             ssh.connect(
                 robot_ip,
+                port=ssh_port,
                 username=username,
                 password=password,
                 timeout=15,
@@ -399,15 +405,15 @@ def upload_json_file(robot_ip: str, username: str, password: str, json_data: Dic
                 pass
 
 
-def stop_move_full_path(robot_ip: str, username: str, password: str) -> Tuple[bool, str, str]:
+def stop_move_full_path(robot_ip: str, username: str, password: str, ssh_port: int = 22) -> Tuple[bool, str, str]:
     """
     Force stop move_full_path.py by terminating the running process.
     """
     cmd = "pkill -f move_full_path.py || true"
-    return _run_remote_command(robot_ip, username, password, cmd)
+    return _run_remote_command(robot_ip, username, password, cmd, ssh_port)
 
 
-def stop_bringup(robot_ip: str, username: str, password: str) -> Tuple[bool, str, str]:
+def stop_bringup(robot_ip: str, username: str, password: str, ssh_port: int = 22) -> Tuple[bool, str, str]:
     """
     Force stop turtlebot3_bringup by terminating the running process.
     """
@@ -422,7 +428,7 @@ def stop_bringup(robot_ip: str, username: str, password: str) -> Tuple[bool, str
             echo "stop_success"
         fi
     """
-    success, out, err = _run_remote_command(robot_ip, username, password, cmd)
+    success, out, err = _run_remote_command(robot_ip, username, password, cmd, ssh_port)
 
     # 종료 확인 결과에 따라 success 결정
     if "stop_success" in (out or ""):
@@ -431,7 +437,7 @@ def stop_bringup(robot_ip: str, username: str, password: str) -> Tuple[bool, str
         return False, out, err
 
 
-def check_bringup_status(robot_ip: str, username: str, password: str) -> Tuple[bool, str, str]:
+def check_bringup_status(robot_ip: str, username: str, password: str, ssh_port: int = 22) -> Tuple[bool, str, str]:
     """
     Check if turtlebot3_bringup is running.
     Returns (is_running, stdout, stderr)
@@ -444,6 +450,7 @@ def check_bringup_status(robot_ip: str, username: str, password: str) -> Tuple[b
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
             robot_ip,
+            port=ssh_port,
             username=username,
             password=password,
             timeout=15,
