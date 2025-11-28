@@ -246,11 +246,24 @@ def connect_robot():
     robot_ip = data.get("robot_ip")
     username = data.get("username")
     password = data.get("password")
+    domain_id = data.get("domain_id", 3)
+    ssh_port = data.get("ssh_port", 22)
 
     if not all([robot_ip, username, password]):
         return jsonify({"status": "error", "message": "로봇 IP, ID, PW를 모두 입력하세요."}), 400
 
-    success, out, err = connect_and_bringup(robot_ip, username, password)
+    # domain_id와 ssh_port를 정수로 변환
+    try:
+        domain_id = int(domain_id) if domain_id else 3
+    except (ValueError, TypeError):
+        domain_id = 3
+    
+    try:
+        ssh_port = int(ssh_port) if ssh_port else 22
+    except (ValueError, TypeError):
+        ssh_port = 22
+
+    success, out, err = connect_and_bringup(robot_ip, username, password, domain_id, ssh_port)
     payload = {"status": "ok" if success else "error", "stdout": out, "stderr": err}
     return jsonify(payload), (200 if success else 500)
 
@@ -262,6 +275,7 @@ def api_check_status():
     robot_ip = data.get("robot_ip")
     username = data.get("username")
     password = data.get("password")
+    ssh_port = data.get("ssh_port", 22)
     
     if not all([robot_ip, username, password]):
         return jsonify({
@@ -270,7 +284,12 @@ def api_check_status():
         }), 400
     
     try:
-        is_running, out, err = check_bringup_status(robot_ip, username, password)
+        ssh_port = int(ssh_port) if ssh_port else 22
+    except (ValueError, TypeError):
+        ssh_port = 22
+    
+    try:
+        is_running, out, err = check_bringup_status(robot_ip, username, password, ssh_port)
         return jsonify({
             "status": "ok",
             "is_running": is_running,
@@ -290,11 +309,23 @@ def test_move():
     robot_ip = data.get("robot_ip")
     username = data.get("username")
     password = data.get("password")
+    domain_id = data.get("domain_id", 3)
+    ssh_port = data.get("ssh_port", 22)
 
     if not all([robot_ip, username, password]):
         return jsonify({"status": "error", "message": "로봇 IP, ID, PW를 모두 입력하세요."}), 400
 
-    success, out, err = send_test_move(robot_ip, username, password)
+    try:
+        domain_id = int(domain_id) if domain_id else 3
+    except (ValueError, TypeError):
+        domain_id = 3
+    
+    try:
+        ssh_port = int(ssh_port) if ssh_port else 22
+    except (ValueError, TypeError):
+        ssh_port = 22
+
+    success, out, err = send_test_move(robot_ip, username, password, domain_id, ssh_port)
     payload = {"status": "ok" if success else "error", "stdout": out, "stderr": err}
     return jsonify(payload), (200 if success else 500)
 
@@ -342,10 +373,21 @@ def start_drive():
     robot_ip = data.get("robot_ip")
     username = data.get("username")
     password = data.get("password")
-    domain_id = data.get("domain_id")
+    domain_id = data.get("domain_id", 3)
+    ssh_port = data.get("ssh_port", 22)
 
     if not all([robot_ip, username, password]):
         return jsonify({"status": "error", "message": "로봇 IP, ID, PW를 모두 입력하세요."}), 400
+
+    try:
+        domain_id = int(domain_id) if domain_id else 3
+    except (ValueError, TypeError):
+        domain_id = 3
+    
+    try:
+        ssh_port = int(ssh_port) if ssh_port else 22
+    except (ValueError, TypeError):
+        ssh_port = 22
 
     # 모드 확인 (차선도로/도보도로)
     route_mode = session.get("last_route_mode", "car")  # 기본값: car
@@ -371,7 +413,7 @@ def start_drive():
         
         # JSON 파일을 원격에 업로드
         upload_success, upload_out, upload_err = upload_json_file(
-            robot_ip, username, password, json_data, remote_json_path
+            robot_ip, username, password, json_data, remote_json_path, ssh_port
         )
         
         if not upload_success:
@@ -384,7 +426,8 @@ def start_drive():
         success, out, err = start_move_full_path(
             robot_ip, username, password, 
             domain_id=domain_id,
-            commands_json=remote_json_path
+            commands_json=remote_json_path,
+            ssh_port=ssh_port
         )
     else:
         # 차선도로 모드: 로컬 PC에서 경로 계산 후 JSON으로 전달
@@ -406,7 +449,7 @@ def start_drive():
         
         # JSON 파일을 원격에 업로드
         upload_success, upload_out, upload_err = upload_json_file(
-            robot_ip, username, password, json_data, remote_json_path
+            robot_ip, username, password, json_data, remote_json_path, ssh_port
         )
         
         if not upload_success:
@@ -419,7 +462,8 @@ def start_drive():
         success, out, err = start_move_full_path(
             robot_ip, username, password, 
             domain_id=domain_id,
-            commands_json=remote_json_path
+            commands_json=remote_json_path,
+            ssh_port=ssh_port
         )
     
     payload = {"status": "ok" if success else "error", "stdout": out, "stderr": err}
