@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>RUN ROPET - Future AI Navigation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +34,13 @@
       perspective: 1000px; /* 3D 공간감 */
       position: relative;
       padding-bottom: 60px; /* 하단 바 공간 확보 */
+      margin: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .btn-group-mobile {
+      display: none; /* 기본적으로 숨김 */
     }
 
     /* === Footer Bar === */
@@ -42,6 +49,7 @@
       bottom: 0;
       left: 0;
       right: 0;
+      width: 100%;
       height: 56px;
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(10px);
@@ -49,8 +57,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      z-index: 10000;
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+      transform: translateZ(0); /* GPU 가속 */
+      -webkit-transform: translateZ(0);
     }
 
     .footer-content {
@@ -183,7 +193,7 @@
 
     /* === 3D Background Grid (The Map) === */
     .cyber-grid {
-      position: absolute;
+      position: fixed;
       width: 300%; /* 더 넓게 */
       height: 300%;
       bottom: -100%;
@@ -195,8 +205,9 @@
       background-size: 100px 100px, 100px 100px, 20px 20px; /* 격자 크기 키움 */
       transform: rotateX(75deg); /* 더 눕혀서 깊이감 강조 */
       animation: gridMove 4s linear infinite; /* 속도 대폭 증가 */
-      z-index: -2;
+      z-index: -10;
       mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%); /* 중앙 집중 조명 효과 */
+      pointer-events: none;
     }
 
     /* Warp Speed Lines (역동성 추가) */
@@ -204,7 +215,7 @@
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
       overflow: hidden;
-      z-index: -1;
+      z-index: -9;
       pointer-events: none;
     }
     .warp-line {
@@ -233,9 +244,9 @@
 
     /* === Perfect S-Curve Dotted Line === */
     .s-curve-container {
-      position: absolute;
+      position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      z-index: -1;
+      z-index: -8;
       pointer-events: none;
       overflow: hidden;
     }
@@ -271,10 +282,9 @@
 
     /* === Glowing Particles (빠른 이동) === */
     .particles {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -7;
       pointer-events: none;
     }
     .particle {
@@ -300,7 +310,7 @@
       gap: 2rem;
       align-items: center;
       position: relative;
-      z-index: 10;
+      z-index: 1;
     }
 
     /* === Left: Text Content === */
@@ -385,8 +395,17 @@
       margin-bottom: 3rem;
       line-height: 1.6;
       max-width: 500px;
-      border-left: 3px solid var(--accent);
-      padding-left: 1.5rem;
+      border-left: none;
+      padding-left: 0;
+    }
+
+    /* 모바일 전용 설명 텍스트 (기본 숨김) */
+    .desc-mobile {
+      display: none;
+    }
+
+    .mobile-desc-wrapper {
+      display: none;
     }
 
     /* Button Style */
@@ -504,6 +523,118 @@
       transform: translateY(50px); /* 로봇 전체 위치 50px 아래로 이동 */
     }
 
+    /* PC 버전에서 모바일 버튼과 요소 숨김 */
+    .visual-area .btn-group-mobile,
+    .visual-area .desc-mobile,
+    .visual-area .badge-mobile {
+      display: none !important;
+    }
+
+    /* PC 버전 (1024px 이상)에서 확실히 모바일 요소 숨김 및 PC 스타일 보호 */
+    @media (min-width: 1025px) {
+      .badge-mobile {
+        display: none !important;
+      }
+
+      .btn-group-mobile {
+        display: none !important;
+      }
+
+      .btn-group-pc {
+        display: flex !important;
+      }
+
+      /* PC 버전 container 원래 스타일 유지 */
+      .container {
+        grid-template-columns: 1.2fr 1fr !important;
+        gap: 2rem !important;
+        padding: 2rem !important;
+        margin: 0 auto !important;
+        display: grid !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 90% !important;
+        max-width: 1400px !important;
+        min-height: auto !important;
+      }
+
+      /* PC 버전 content-wrap 원래 스타일 유지 */
+      .content-wrap {
+        padding: 2rem !important;
+        width: auto !important;
+        max-width: none !important;
+        align-items: flex-start !important;
+        display: flex !important;
+        flex-direction: column !important;
+        text-align: left !important;
+        order: 0 !important;
+        margin-bottom: 0 !important;
+      }
+
+      .content-wrap .badge {
+        display: inline-flex !important;
+      }
+
+      h1.main-title {
+        font-size: 5rem !important;
+        margin-bottom: 0.5rem !important;
+      }
+
+      h2.sub-title {
+        font-size: 2rem !important;
+        margin-bottom: 2rem !important;
+      }
+
+      .content-wrap .desc {
+        display: block !important;
+      }
+
+      /* PC 버전 visual-area 원래 스타일 유지 */
+      .visual-area {
+        transform: translateY(50px) !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        width: auto !important;
+        order: 0 !important;
+      }
+
+      .visual-area .holo-base,
+      .visual-area .hud-ring {
+        display: block !important;
+      }
+
+      /* PC 버전 holo-base 원형 유지 */
+      .holo-base {
+        width: 400px !important;
+        height: 400px !important;
+        border-radius: 50% !important;
+        transform: rotateX(70deg) !important;
+      }
+
+      /* PC 버전 robot-container 크기 유지 */
+      .robot-container {
+        max-width: 600px !important;
+        width: 100% !important;
+      }
+
+      /* PC 버전 robot-svg 크기 유지 */
+      .robot-svg {
+        width: 100% !important;
+        height: auto !important;
+      }
+
+      .visual-area .hologram-pin {
+        width: 60px !important;
+        height: 80px !important;
+        top: -60px !important;
+      }
+    }
+
     /* 홀로그램 베이스 (바닥) */
     .holo-base {
       position: absolute;
@@ -605,13 +736,526 @@
       98% { transform: scaleY(0.1); }
     }
 
+    /* === Mobile Notice Modal === */
+    .mobile-notice-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #050b14;
+      z-index: 3000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .mobile-notice-content {
+      background: #050b14;
+      border: 2px solid var(--primary);
+      border-radius: 15px;
+      padding: 2.5rem 2rem;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0, 242, 255, 0.5);
+    }
+
+    .mobile-notice-icon {
+      font-size: 4rem;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      animation: pulseBase 2s infinite ease-in-out;
+    }
+
+    .mobile-notice-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .mobile-notice-text {
+      font-size: 1rem;
+      color: var(--text-main);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .mobile-notice-url {
+      font-size: 0.9rem;
+      color: var(--primary);
+      background: rgba(0, 242, 255, 0.1);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 242, 255, 0.3);
+      margin-top: 1.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: 'Courier New', monospace;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      user-select: all;
+    }
+
+    .mobile-notice-url:hover {
+      background: rgba(0, 242, 255, 0.2);
+      border-color: rgba(0, 242, 255, 0.5);
+    }
+
+    .mobile-notice-url-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .mobile-notice-btn {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 0.5rem 2rem;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      margin-top: 20px;
+    }
+
+    .mobile-notice-btn:hover {
+      background: var(--text-main);
+      box-shadow: 0 0 20px rgba(0, 242, 255, 0.6);
+      transform: translateY(-2px);
+    }
+
     /* 모바일 대응 */
     @media (max-width: 1024px) {
-      .container { grid-template-columns: 1fr; text-align: center; }
-      h1 { font-size: 3rem; }
-      p.desc { margin: 0 auto 2rem; border-left: none; border-bottom: 3px solid var(--accent); padding-bottom: 1rem; padding-left: 0; }
-      .btn-group { justify-content: center; }
-      .visual-area { margin-top: 3rem; }
+      .container { 
+        grid-template-columns: 1fr; 
+        text-align: center; 
+        gap: 1.5rem;
+        padding: 1rem 0;
+        margin: 0 auto;
+        justify-items: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        min-height: 100vh;
+        position: relative;
+      }
+
+      .content-wrap {
+        width: 100%;
+        max-width: 100%;
+        padding: 0 1rem;
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        order: 2;
+        margin-bottom: 1rem;
+        margin-top: 150px;
+      }
+
+      /* 모바일에서 PC badge 숨김 */
+      .content-wrap .badge {
+        display: none;
+      }
+      
+      h1.main-title { 
+        font-size: 2.5rem;
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 0.75rem;
+      }
+
+      .title-logo {
+        flex-shrink: 0;
+        height: 2.5rem;
+        width: auto;
+      }
+      
+      h2.sub-title {
+        font-size: 1.1rem;
+        line-height: 1.4;
+        margin-bottom: 1.5rem;
+      }
+      
+      /* PC용 설명 숨김 */
+      .content-wrap .desc {
+        display: none;
+      }
+
+      .desc-mobile {
+        display: none !important;
+      }
+      
+      .btn-group-pc {
+        display: none; /* PC 버튼 숨김 */
+      }
+
+      /* 모바일 badge를 container 내부, visual-area 밖에 별도 요소로 배치 */
+      .badge-mobile {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.5rem;
+        background: rgba(0, 242, 255, 0.1);
+        border: 1px solid rgba(0, 242, 255, 0.3);
+        color: var(--primary);
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        font-family: 'Orbitron', sans-serif;
+        width: auto;
+        min-width: 200px;
+        max-width: 90%;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+        backdrop-filter: blur(5px);
+        white-space: nowrap;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translateX(-50%) translateY(-175px);
+        z-index: 2;
+        order: 2;
+      }
+
+      .badge-mobile .badge-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--primary);
+        box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+        animation: blink 2s infinite ease-in-out;
+      }
+
+      .visual-area .badge-mobile {
+        display: none !important;
+      }
+      
+      .visual-area { 
+        margin-top: 1rem;
+        transform: translateY(125px);
+        margin-bottom: 1.5rem;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        order: 3;
+        width: 100%;
+        padding: 1rem 0;
+      }
+
+      .visual-area .holo-base,
+      .visual-area .hud-ring {
+        display: none;
+      }
+
+      .visual-area .robot-container {
+        max-width: 280px;
+        width: 100%;
+      }
+
+      .visual-area .robot-svg {
+        width: 100%;
+        height: auto;
+      }
+
+      .visual-area .hologram-pin {
+        width: 50px;
+        height: 65px;
+        top: -50px;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+      }
+
+      /* visual-area 내부 요소들의 순서 명확화 */
+      .visual-area > * {
+        position: relative;
+      }
+
+      .mobile-desc-wrapper {
+        display: none;
+      }
+
+      .visual-area svg {
+        order: 1;
+      }
+
+      .badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 1rem;
+        align-self: center;
+      }
+
+      /* 모바일 버튼을 visual-area 밖으로 이동 */
+      .btn-group-mobile {
+        display: flex !important;
+        justify-content: center;
+        width: 100%;
+        margin: calc(1.5rem + 80px) auto 1.5rem;
+        order: 4;
+        padding: 0 1rem;
+        position: relative;
+        z-index: 2;
+      }
+
+      .visual-area .btn-group-mobile {
+        display: none !important;
+      }
+
+      .footer-bar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        height: auto !important;
+        min-height: 56px !important;
+        padding: 0.75rem 0 !important;
+        z-index: 10000 !important;
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        margin: 0 !important;
+      }
+
+      .footer-content {
+        flex-direction: row;
+        gap: 0.5rem;
+        font-size: 0.7rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .footer-separator {
+        display: inline;
+      }
+
+      .cyber-grid {
+        display: none; /* 모바일에서 복잡한 배경 제거 */
+      }
+
+      .warp-container {
+        display: none; /* 모바일에서 워프 라인 제거 */
+      }
+    }
+
+    @media (max-width: 768px) {
+      /* 모바일 가로/세로 고정 */
+      html {
+        width: 100%;
+        height: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        position: fixed;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      body {
+        overflow-y: auto; /* 모바일에서는 스크롤 허용 */
+        overflow-x: hidden;
+        padding-bottom: 80px; /* 하단바 공간 확보 */
+        padding-top: 10px; /* 상단 패딩 조정 */
+        width: 100vw;
+        max-width: 100vw;
+        min-height: 100vh;
+        min-height: -webkit-fill-available; /* iOS Safari 대응 */
+        position: relative;
+      }
+
+      .badge-mobile {
+        display: inline-flex !important;
+        padding: 0.5rem 1.5rem !important;
+        min-width: 200px !important;
+        font-size: 0.75rem !important;
+        position: fixed !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translateX(-50%) translateY(-175px) !important;
+        z-index: 2 !important;
+        order: 2 !important;
+        margin: 0 !important;
+      }
+
+      .visual-area .badge-mobile {
+        display: none !important;
+      }
+
+      .footer-bar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        z-index: 10000 !important;
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        height: auto !important;
+        min-height: 56px !important;
+        padding: 0.75rem 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      .container {
+        width: 100vw;
+        max-width: 100vw;
+        padding: 1rem 0;
+        margin: 0;
+        justify-items: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        box-sizing: border-box;
+        gap: 1rem;
+        min-height: 100vh;
+        position: relative;
+      }
+
+      .content-wrap {
+        padding: 0 1rem 0.5rem;
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-sizing: border-box;
+        order: 2;
+        margin-top: 150px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .visual-area {
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+        order: 3;
+        padding: 1rem 0;
+        position: relative;
+        z-index: 2;
+      }
+
+      .visual-area .holo-base,
+      .visual-area .hud-ring {
+        display: none !important;
+      }
+
+      h1.main-title {
+        font-size: 2rem;
+        gap: 10px;
+        flex-wrap: nowrap;
+        margin-bottom: 0.75rem;
+      }
+
+      .title-logo {
+        width: 1.8rem;
+        height: 1.8rem;
+      }
+
+      h2.sub-title {
+        font-size: 0.95rem;
+        line-height: 1.3;
+        margin-bottom: 1.5rem;
+      }
+
+      .desc-mobile {
+        display: none !important;
+      }
+
+      .badge-mobile {
+        display: inline-flex !important;
+        order: 2 !important;
+        position: fixed !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translateX(-50%) translateY(-175px) !important;
+        z-index: 2 !important;
+        margin: 0 !important;
+      }
+
+      .visual-area .badge-mobile {
+        display: none !important;
+      }
+
+      .visual-area svg,
+      .visual-area .robot-container {
+        order: 1 !important;
+        margin: 0;
+      }
+
+      .visual-area .robot-container {
+        max-width: 250px !important;
+      }
+
+      .visual-area .hologram-pin {
+        width: 45px !important;
+        height: 60px !important;
+        top: -45px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+      }
+
+      .btn-group-mobile {
+        display: flex !important;
+        order: 4 !important;
+        margin: calc(2rem + 80px) auto 2rem !important;
+        width: 100% !important;
+        padding: 0 1rem !important;
+        justify-content: center !important;
+        position: relative;
+        z-index: 2;
+      }
+
+      .visual-area .btn-group-mobile {
+        display: none !important;
+      }
+
+      .visual-area .desc-mobile {
+        display: none !important;
+      }
+
+      /* 모바일 가로/세로 고정 */
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow-x: hidden;
+        position: fixed;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .cta-btn {
+        padding: 1rem 2rem;
+        font-size: 0.95rem;
+        width: auto;
+        min-width: 200px;
+      }
+
+      .contact-image {
+        max-width: 90vw;
+        max-height: 70vh;
+      }
     }
   </style>
 </head>
@@ -639,13 +1283,12 @@
   <div class="particles" id="particles"></div>
 
   <div class="container">
-    
     <!-- TEXT SECTION -->
     <div class="content-wrap">
       <div class="badge">
         <span class="badge-dot"></span>
         ROBOT PATH PLANNING
-      </div>
+    </div>
       
       <!-- 메인 타이틀 (로고 포함) -->
       <h1 class="main-title">
@@ -663,20 +1306,26 @@
       <h2 class="sub-title">
         <span style="color: white;">YOUR PET ROBOT,</span><br>
         <span style="color: var(--primary)">ANYWHERE YOU WANT</span>
-      </h2>
+        </h2>
 
       <p class="desc">
         펫로봇을 RUN ROPET에 연동하고 목적지를 지정하세요.<br>
         <strong>실시간 경로 계획 명령</strong>으로 심부름도, 배달도 가능합니다.<br>
         네이버 지도 기반 스마트 자율주행 솔루션.
       </p>
-      
-      <div class="btn-group">
+
+      <div class="btn-group btn-group-pc">
         <a href="/dashboard" class="cta-btn">
           <span>START DRIVING <i class="fas fa-location-arrow"></i></span>
         </a>
-      </div>
-    </div>
+          </div>
+            </div>
+
+    <!-- 모바일 전용 Badge (visual-area 밖, 별도 요소) -->
+    <div class="badge badge-mobile">
+      <span class="badge-dot"></span>
+      ROBOT PATH PLANNING
+            </div>
 
     <!-- ROBOT VISUAL SECTION -->
     <div class="visual-area" id="visualArea">
@@ -704,7 +1353,7 @@
               </linearGradient>
             </defs>
           </svg>
-        </div>
+            </div>
 
         <!-- Re-using the Original Robot SVG but polished -->
         <svg class="robot-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
@@ -773,9 +1422,16 @@
               </g>
             </g>
           </svg>
-      </div>
-    </div>
-  </div>
+          </div>
+            </div>
+
+    <!-- 모바일 전용 버튼 (visual-area 밖) -->
+    <div class="btn-group btn-group-mobile">
+      <button class="cta-btn" onclick="handleMobileStartDrive()">
+        <span>START DRIVING <i class="fas fa-location-arrow"></i></span>
+            </button>
+          </div>
+        </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   <script>
@@ -892,7 +1548,7 @@
       <button class="footer-contact-btn" onclick="openContactModal()">
         CONTACT
       </button>
-    </div>
+          </div>
   </footer>
 
   <!-- Contact Modal -->
@@ -900,8 +1556,88 @@
     <div class="contact-modal-content">
       <button class="contact-modal-close" onclick="closeContactModal()">&times;</button>
       <img src="/static/img/contect.png" alt="Contact" class="contact-image">
+        </div>
+      </div>
+
+  <!-- Mobile Notice Modal -->
+  <div id="mobileNoticeModal" class="mobile-notice-modal">
+    <div class="mobile-notice-content">
+      <div class="mobile-notice-icon">💻</div>
+      <div class="mobile-notice-title">PC 버전 최적화 시스템</div>
+      <div class="mobile-notice-text">
+        모바일 버전도 곧 선보일 예정입니다.<br>
+        그동안 더 나은 경험을 위해 PC 버전을 이용해 주세요.
+            </div>
+      <span class="mobile-notice-url-label">PC 브라우저에서 아래 주소를 입력하세요:</span>
+      <div class="mobile-notice-url" onclick="copyToClipboard(this)" title="클릭하여 복사">
+        <span id="currentUrl">https://runropet-1.onrender.com/</span>
+          </div>
+      <button class="mobile-notice-btn" onclick="closeMobileNotice()">확인</button>
     </div>
   </div>
+
+  <script>
+    // === Mobile Detection ===
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+        || window.innerWidth <= 768;
+    }
+
+    // 페이지 로드 시 모바일 감지 (안내 표시 안 함)
+    window.addEventListener('load', function() {
+      // 페이지 로드 시 안내를 표시하지 않음
+    });
+
+    // 모바일에서 START DRIVING 버튼 클릭 처리
+    function handleMobileStartDrive() {
+      if (isMobileDevice()) {
+        // 고정 URL 설정
+        const fixedUrl = 'https://runropet-1.onrender.com/';
+        document.getElementById('currentUrl').textContent = fixedUrl;
+        
+        // 모달 표시
+        document.getElementById('mobileNoticeModal').style.display = 'flex';
+      } else {
+        // PC에서는 정상적으로 이동
+        window.location.href = '/dashboard';
+      }
+    }
+
+    function closeMobileNotice() {
+      document.getElementById('mobileNoticeModal').style.display = 'none';
+      // 레이아웃 재계산을 위해 페이지 새로고침
+      location.reload();
+    }
+
+    // URL 복사 기능
+    function copyToClipboard(element) {
+      const url = document.getElementById('currentUrl').textContent;
+      navigator.clipboard.writeText(url).then(function() {
+        const originalText = element.querySelector('span').textContent;
+        element.querySelector('span').textContent = '복사되었습니다!';
+        element.style.background = 'rgba(0, 255, 157, 0.2)';
+        element.style.borderColor = 'var(--secondary)';
+        setTimeout(function() {
+          element.querySelector('span').textContent = originalText;
+          element.style.background = 'rgba(0, 242, 255, 0.1)';
+          element.style.borderColor = 'rgba(0, 242, 255, 0.3)';
+        }, 2000);
+      }).catch(function(err) {
+        console.error('복사 실패:', err);
+      });
+    }
+
+    // 리사이즈 시 모바일 감지 (선택적 - 너무 자주 뜨지 않도록)
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        if (isMobileDevice() && window.innerWidth <= 768) {
+          // 모바일에서는 이미 안내가 표시되었으므로 추가 처리 없음
+        }
+      }, 250);
+    });
+  </script>
 </body>
 </html>
 
