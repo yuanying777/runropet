@@ -784,20 +784,22 @@
     }
 
     .mobile-notice-url {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--primary);
       background: rgba(0, 242, 255, 0.1);
-      padding: 0.75rem 1rem;
+      padding: 0.75rem 0.5rem;
       border-radius: 8px;
       border: 1px solid rgba(0, 242, 255, 0.3);
       margin-top: 1.5rem;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow-x: auto;
+      overflow-y: hidden;
+      text-align: center;
       font-family: 'Courier New', monospace;
       cursor: pointer;
       transition: all 0.3s ease;
       user-select: all;
+      -webkit-overflow-scrolling: touch;
     }
 
     .mobile-notice-url:hover {
