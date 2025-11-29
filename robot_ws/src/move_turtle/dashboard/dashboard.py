@@ -123,6 +123,13 @@ def save_motion_settings_file(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 @app.route("/")
 def index():
+    """인트로 화면 (메인 진입점)"""
+    return render_template("index.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    """대시보드 화면"""
     # 서버 시작/새로고침 시 항상 디폴트 설정 사용
     default_settings = {
         "mode": "scale",
@@ -134,7 +141,7 @@ def index():
     # 캐시 버스팅을 위한 타임스탬프 (서버 시작 시간 기반)
     import time
     cache_bust = int(time.time())
-    return render_template("index.html", settings=default_settings, cache_bust=cache_bust)
+    return render_template("dashboard.html", settings=default_settings, cache_bust=cache_bust)
 
 
 @app.post("/api/geocode")
