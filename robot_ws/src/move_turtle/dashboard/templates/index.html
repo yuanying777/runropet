@@ -1,395 +1,907 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
   <meta charset="UTF-8">
-  <title>RUN ROPET</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RUN ROPET - Future AI Navigation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ cache_bust }}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #050b14;
+      --bg-gradient: radial-gradient(circle at 50% -20%, #1a2c4e, #050b14 80%);
+      --primary: #00f2ff;
+      --secondary: #00ff9d;
+      --accent: #2d5cf6;
+      --glass: rgba(255, 255, 255, 0.05);
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg-deep);
+      background-image: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow: hidden; /* 스크롤 없애고 몰입감 증대 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1000px; /* 3D 공간감 */
+      position: relative;
+      padding-bottom: 60px; /* 하단 바 공간 확보 */
+    }
+
+    /* === Footer Bar === */
+    .footer-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0, 242, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .footer-content {
+      width: 90%;
+      max-width: 1400px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0 1rem;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .footer-copyright {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .footer-separator {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .footer-planner {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .footer-contact-btn {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      padding: 0.25rem 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .footer-contact-btn:hover {
+      background: var(--primary);
+      color: #000;
+      box-shadow: 0 0 15px rgba(0, 242, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .footer-contact-btn:active {
+      transform: translateY(0);
+    }
+
+    /* === Contact Modal === */
+    .contact-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .contact-modal-content {
+      position: relative;
+      display: inline-block;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 10px;
+      padding: 0;
+      border: 1px solid rgba(0, 242, 255, 0.3);
+      box-shadow: 0 0 50px rgba(0, 242, 255, 0.3);
+    }
+
+    .contact-modal-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(0, 0, 0, 0.5);
+      border: none;
+      color: var(--primary);
+      font-size: 2rem;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      line-height: 1;
+      z-index: 10;
+      backdrop-filter: blur(5px);
+    }
+
+    .contact-modal-close:hover {
+      background: rgba(0, 242, 255, 0.2);
+      transform: rotate(90deg);
+    }
+
+    .contact-image {
+      max-width: 56.25vw;
+      max-height: 56.25vh;
+      width: auto;
+      height: auto;
+      display: block;
+      border-radius: 5px;
+      margin: 0;
+    }
+
+    /* === 3D Background Grid (The Map) === */
+    .cyber-grid {
+      position: absolute;
+      width: 300%; /* 더 넓게 */
+      height: 300%;
+      bottom: -100%;
+      left: -100%;
+      background-image: 
+        linear-gradient(rgba(0, 242, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 242, 255, 0.1) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, rgba(4, 117, 244, 0.1) 0%, transparent 5%);
+      background-size: 100px 100px, 100px 100px, 20px 20px; /* 격자 크기 키움 */
+      transform: rotateX(75deg); /* 더 눕혀서 깊이감 강조 */
+      animation: gridMove 4s linear infinite; /* 속도 대폭 증가 */
+      z-index: -2;
+      mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%); /* 중앙 집중 조명 효과 */
+    }
+
+    /* Warp Speed Lines (역동성 추가) */
+    .warp-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      overflow: hidden;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .warp-line {
+      position: absolute;
+      top: var(--center-y, 50%); 
+      left: var(--center-x, 50%);
+      height: 3px;
+      width: 200px;
+      transform-origin: left center;
+      opacity: 0;
+      animation: warpMove 2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+      border-radius: 2px;
+      box-shadow: 0 0 10px currentColor; /* 빛 번짐 효과 */
+    }
+
+    @keyframes warpMove {
+      0% { transform: rotate(var(--angle)) translateX(100px) scaleX(0.1); opacity: 0; }
+      50% { opacity: 0.8; }
+      100% { transform: rotate(var(--angle)) translateX(800px) scaleX(1.5); opacity: 0; }
+    }
+
+    @keyframes gridMove {
+      0% { transform: rotateX(75deg) translateY(0); }
+      100% { transform: rotateX(75deg) translateY(100px); }
+    }
+
+    /* === Perfect S-Curve Dotted Line === */
+    .s-curve-container {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .s-curve-path {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      /* 동그란 도트: 점(6px) + 간격(24px) */
+      stroke-dasharray: 0 30; /* 처음엔 점이 안 보이게 */
+      opacity: 0.6;
+      filter: drop-shadow(0 0 3px var(--primary));
+    }
+
+    @keyframes dotFlow {
+      0% { 
+        stroke-dashoffset: 1500; /* 오른쪽 밖에서 시작 */
+        stroke-dasharray: 0 30; /* 점이 안 보임 */
+      }
+      10% {
+        stroke-dasharray: 6 30; /* 점이 나타나기 시작 */
+      }
+      90% {
+        stroke-dasharray: 6 30; /* 점이 유지 */
+      }
+      100% { 
+        stroke-dashoffset: -1500; /* 왼쪽 밖으로 사라짐 */
+        stroke-dasharray: 0 30; /* 점이 사라짐 */
+      }
+    }
+
+    /* === Glowing Particles (빠른 이동) === */
+    .particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .particle {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      opacity: 0;
+      animation: starPass 3s linear infinite;
+    }
+
+    @keyframes starPass {
+      0% { transform: translateZ(-1000px) translateX(0) translateY(0); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateZ(500px) translateX(var(--tx)) translateY(var(--ty)); opacity: 0; }
+    }
+
+    /* === Main Container === */
+    .container {
+      width: 90%;
+      max-width: 1400px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 2rem;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* === Left: Text Content === */
+    .content-wrap {
+      padding: 2rem;
+      animation: slideIn 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .badge {
+      align-self: flex-start; /* 왼쪽 정렬 유지 */
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1.2rem;
+      background: rgba(0, 242, 255, 0.1);
+      border: 1px solid rgba(0, 242, 255, 0.3);
+      color: var(--primary);
+      border-radius: 100px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: 'Orbitron', sans-serif;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+      backdrop-filter: blur(5px);
+    }
+
+    .badge-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+      animation: blink 2s infinite ease-in-out;
+    }
+
+    /* 메인 타이틀 (RUN ROPET) */
+    h1.main-title {
+      font-size: 5rem; /* 압도적인 크기 */
+      line-height: 1.1;
+      font-weight: 900;
+      margin-bottom: 0.5rem;
+      letter-spacing: -2px;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    /* 로고 스타일 */
+    .title-logo {
+      height: 1em; /* 폰트 크기에 맞춤 */
+      width: auto;
+      fill: var(--primary);
+      filter: drop-shadow(0 0 15px var(--primary));
+    }
+
+    /* 서브 타이틀 (NEXT GEN...) */
+    h2.sub-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      font-family: 'Orbitron', sans-serif;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #fff 0%, var(--primary) 50%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 30px rgba(0, 242, 255, 0.3));
+    }
+
+    p.desc {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      margin-bottom: 3rem;
+      line-height: 1.6;
+      max-width: 500px;
+      border-left: 3px solid var(--accent);
+      padding-left: 1.5rem;
+    }
+
+    /* Button Style */
+    .btn-group {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .cta-btn {
+      position: relative;
+      padding: 1.2rem 3rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #000;
+      background: linear-gradient(135deg, var(--primary) 0%, #00ccff 100%);
+      text-decoration: none;
+      border-radius: 4px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      /* 사선 컷팅 효과 */
+      clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+      /* 기본 그림자 및 글로우 효과 */
+      box-shadow: 
+        0 4px 15px rgba(0, 242, 255, 0.4),
+        0 0 30px rgba(0, 242, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(0, 242, 255, 0.5);
+    }
+
+    .cta-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.4), 
+        rgba(255, 255, 255, 0.6),
+        rgba(255, 255, 255, 0.4),
+        transparent
+      );
+      transform: skewX(-20deg);
+      animation: shine 3s infinite;
+      z-index: 1;
+    }
+
+    .cta-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.5), 
+        transparent
+      );
+      transform: skewX(-20deg);
+      animation: shine 2.5s infinite 0.5s;
+      z-index: 1;
+    }
+
+    @keyframes shine {
+      0% {
+        left: -100%;
+      }
+      50% {
+        left: 150%;
+      }
+      100% {
+        left: 150%;
+      }
+    }
+
+    .cta-btn:hover {
+      background: linear-gradient(135deg, #00ccff 0%, var(--primary) 100%);
+      box-shadow: 
+        0 8px 25px rgba(0, 242, 255, 0.6),
+        0 0 50px rgba(0, 242, 255, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      transform: translateY(-3px) scale(1.02);
+      border-color: rgba(0, 242, 255, 0.8);
+    }
+
+    .cta-btn:hover::before,
+    .cta-btn:hover::after {
+      animation-duration: 1.5s;
+    }
+
+    .cta-btn:active {
+      transform: translateY(-1px) scale(0.98);
+      box-shadow: 
+        0 2px 10px rgba(0, 242, 255, 0.5),
+        0 0 20px rgba(0, 242, 255, 0.3);
+    }
+
+    .cta-btn span {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* === Right: 3D Hologram Robot Area === */
+    .visual-area {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1000px;
+      transform: translateY(50px); /* 로봇 전체 위치 50px 아래로 이동 */
+    }
+
+    /* 홀로그램 베이스 (바닥) */
+    .holo-base {
+      position: absolute;
+      bottom: -20px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(0, 242, 255, 0.2) 0%, transparent 70%);
+      transform: rotateX(70deg);
+      border-radius: 50%;
+      border: 2px solid rgba(0, 242, 255, 0.3);
+      box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
+      animation: pulseBase 4s infinite ease-in-out;
+    }
+
+    /* 로봇 컨테이너 - 둥둥 떠다니는 효과 */
+    .robot-container {
+      width: 100%;
+      max-width: 600px;
+      animation: floatRobot 6s ease-in-out infinite;
+      filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
+      position: relative;
+      z-index: 2;
+    }
+
+    /* 로봇 SVG 수정 (그림자 및 하이라이트 강화) */
+    .robot-svg {
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    
+    /* 스캐닝 레이저 효과 */
+    .scan-beam {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: var(--secondary);
+      box-shadow: 0 0 20px var(--secondary);
+      opacity: 0.7;
+      animation: scanMove 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      z-index: 5;
+    }
+
+    @keyframes scanMove {
+      0% { top: 10%; opacity: 0; transform: scaleX(0.8); }
+      10% { opacity: 1; transform: scaleX(1); }
+      90% { opacity: 1; transform: scaleX(1); }
+      100% { top: 90%; opacity: 0; transform: scaleX(0.8); }
+    }
+
+    /* HUD Rings (로봇 주변 UI) */
+    .hud-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 1px dashed rgba(0, 242, 255, 0.3);
+      pointer-events: none;
+    }
+    .ring-1 { width: 110%; height: 110%; animation: spin 20s linear infinite; }
+    .ring-2 { width: 130%; height: 130%; border-color: rgba(0, 255, 157, 0.2); animation: spinReverse 25s linear infinite; }
+
+    /* Hologram Pin (Original) */
+    .hologram-pin {
+      position: absolute;
+      top: -60px; /* 로봇 머리 위 */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 80px;
+      animation: hologramFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.8));
+      z-index: 20;
+    }
+
+    @keyframes hologramFloat {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-15px); }
+    }
+
+    /* Animations */
+    @keyframes floatRobot {
+      0%, 100% { transform: translateY(0) rotateZ(0deg); }
+      50% { transform: translateY(-30px) rotateZ(1deg); }
+    }
+    @keyframes pulseBase {
+      0%, 100% { transform: rotateX(70deg) scale(1); opacity: 0.5; }
+      50% { transform: rotateX(70deg) scale(1.1); opacity: 0.8; }
+    }
+    @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+    @keyframes spinReverse { to { transform: translate(-50%, -50%) rotate(-360deg); } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+    
+    @keyframes eyeBlink {
+      0%, 96%, 100% { transform: scaleY(1); }
+      98% { transform: scaleY(0.1); }
+    }
+
+    /* 모바일 대응 */
+    @media (max-width: 1024px) {
+      .container { grid-template-columns: 1fr; text-align: center; }
+      h1 { font-size: 3rem; }
+      p.desc { margin: 0 auto 2rem; border-left: none; border-bottom: 3px solid var(--accent); padding-bottom: 1rem; padding-left: 0; }
+      .btn-group { justify-content: center; }
+      .visual-area { margin-top: 3rem; }
+    }
+  </style>
 </head>
-
 <body>
-  <header>
-    <div class="mode-toggle">
-      <button class="mode-btn active" data-mode="car" id="carModeBtn">
-        <i class="fas fa-car-side"></i> 차선도로
-      </button>
-      <button class="mode-btn" data-mode="walk" id="walkModeBtn">
-        <i class="fas fa-walking"></i> 도보도로
-      </button>
-      <span class="header-divider">|</span>
-      <button class="header-help-btn" id="helpBtn">
-        <i class="fas fa-file-alt"></i> 사용 설명
-      </button>
-    </div>
-    <span class="header-title">RUN ROPET</span>
-    <div style="width: 200px;"></div> <!-- 오른쪽 공간 채우기 -->
-  </header>
-  <main>
-    <div class="dashboard-grid">
-      <!-- 1행: 스텝1, 스텝2, 스텝3, 카메라 섹션 (높이 1/3, 4열) -->
-      <div class="row row-1">
-      <section class="panel" id="step1">
-        <h2>
-          STEP 01 목표 입력
-          <div class="scale-control">
-            <span id="speedTag" class="info-pill">0.1m/s</span>
-            <span id="scaleTag" class="info-pill">--</span>
-            <span id="scaleModeTag" class="mode-tag">DOWN</span>
-            <button class="secondary" id="scaleBtn">SCALE ⚙︎</button>
-          </div>
-        </h2>
-        <!-- 차선도로 모드 -->
-        <form id="routeForm" class="route-mode active">
-          <div class="inputs-grid">
-            <div>
-              <label>출발지</label>
-              <input type="text" name="start_address" value="" required>
-            </div>
-            <div>
-              <label>도착지</label>
-              <input type="text" name="goal_address" value="" required>
-            </div>
-          </div>
-          <input type="hidden" name="width" id="scaleWidth" value="{{ settings.scale_width }}">
-          <input type="hidden" name="height" id="scaleHeight" value="{{ settings.scale_height }}">
-          <input type="hidden" id="movementMode" value="{{ settings.mode }}">
-          <input type="hidden" id="movementSpeed" value="{{ settings.scale_speed if settings.mode == 'scale' else settings.real_speed }}">
-          <div style="margin-top: 16px;">
-            <button class="primary" type="submit" style="width: 100%;">경로 생성</button>
-          </div>
-        </form>
-        <!-- 도보도로 모드 -->
-        <div id="walkingMode" class="route-mode">
-          <div style="margin-bottom: 16px;">
-            <label>링크 입력</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="walkingUrlInput" placeholder="네이버 지도 링크를 붙여넣으세요" style="flex: 1;">
-              <button class="primary" id="crawlBtn">경로 생성</button>
-            </div>
-            <p style="font-size: 0.85em; color: #666; margin-top: 8px;">
-              출발지와 도착지의 최종 경로가 있는 네이버 지도의 페이지의 링크를 복사해서 붙여 넣으세요.
-            </p>
-          </div>
-          <div class="progress-container" id="crawlProgressContainer">
-            <div class="progress-label">
-              <span>진행도</span>
-              <span id="crawlProgressText">0%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="crawlProgressFill"></div>
-            </div>
-          </div>
-          <!-- 횡단보도 입력 섹션 -->
-          <div id="crosswalkSection" style="display: none; margin-top: 16px; padding: 16px; background: #f5f8ff; border-radius: 12px;">
-            <div id="crosswalkText" style="font-weight: 600; margin-bottom: 12px; color: var(--blue);"></div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <label style="flex-shrink: 0;">각도를 입력하세요:</label>
-              <input type="number" id="crosswalkAngleInput" placeholder="0/90/-90" style="flex: 1;" min="-90" max="90" step="90">
-              <button class="primary" id="crosswalkNextBtn">다음</button>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <section class="panel" id="step2">
-        <h2>
-          STEP 02 경로 계획
-          <button class="primary step2-download-btn" type="button" id="downloadBtn">
-            move_path.py <i class="fas fa-download"></i>
-          </button>
-        </h2>
-        <div class="step2-content">
-          <div class="step2-preview">
-            <img id="routePreviewImage" alt="경로 시각화 이미지">
-            <div id="routePreviewPlaceholder" class="step2-preview-placeholder">
-              경로 시각화 이미지
-            </div>
-          </div>
-          <div class="command-list" id="commandsList">
-            <div class="command-list-placeholder">경로 추출 로직</div>
-          </div>
-        </div>
-      </section>
+  <!-- 3D Floor Grid with Path Simulation -->
+  <div class="cyber-grid"></div>
+  
+  <!-- Perfect S-Curve Dotted Line (Red Line Pattern) -->
+  <svg class="s-curve-container" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+    <!-- 빨간색 라인처럼 완만한 U자 곡선 (왼쪽 상단→하단→오른쪽 중간 높이) -->
+    <path class="s-curve-path" 
+          d="M -200 250 
+             C 100 350 300 500 500 650
+             C 700 800 900 900 1100 900
+             C 1300 900 1500 850 1700 750
+             C 1900 650 2050 600 2200 550"
+          style="animation: dotFlow 8s linear infinite;"/>
+  </svg>
+  
+  <!-- Warp Speed Effect -->
+  <div class="warp-container" id="warpContainer"></div>
 
-      <section class="panel" id="step3">
-        <h2>
-          STEP 03 내 로봇 연동
-          <div class="step3-download-buttons">
-            <a href="/api/download-robot-test" class="step3-download-btn" download>
-              robot_test <i class="fas fa-download"></i>
-            </a>
-            <a href="/api/download-robot-move" class="step3-download-btn" download>
-              robot_move <i class="fas fa-download"></i>
-            </a>
-          </div>
-        </h2>
-        <div class="step3-grid">
-          <form id="connectForm" class="step3-form">
-            <div class="step3-field">
-              <label for="robot_ip">로봇 IP</label>
-              <input type="text" name="robot_ip" id="robot_ip" placeholder="192.168.x.x" required>
-            </div>
-            <div class="step3-field">
-              <label for="robot_id">로봇 ID</label>
-              <input type="text" name="username" id="robot_id" placeholder="ubuntu" required>
-            </div>
-            <div class="step3-field">
-              <label for="robot_pw">로봇 PW</label>
-              <input type="password" name="password" id="robot_pw" placeholder="비밀번호" required>
-            </div>
-            <div class="step3-field">
-              <label for="domain_id">DOMAIN ID</label>
-              <input type="number" name="domain_id" id="domain_id" placeholder="0" min="0">
-            </div>
-          </form>
-          <div class="step3-buttons">
-            <button class="step3-btn step3-btn--primary" type="submit" form="connectForm" id="connectBtn">
-              <span>로봇 연동</span>
-            </button>
-            <button class="step3-btn step3-btn--test" id="testBtn"><span>TEST</span></button>
-            <button class="step3-btn step3-btn--primary" id="startDriveBtn"><span>주행 시작</span></button>
-          </div>
-        </div>
-        <div class="step3-status" id="step3Status">상태 메시지가 여기에 표시됩니다.</div>
-      </section>
+  <!-- Floating Particles -->
+  <div class="particles" id="particles"></div>
 
-      <section class="panel" id="cameraSection">
-        <h2>
-          카메라
-          <div class="camera-toggle-container">
-            <span class="camera-toggle-label" id="cameraToggleLabel">OFF</span>
-            <label class="camera-toggle-switch">
-              <input type="checkbox" id="cameraToggle">
-              <span class="camera-toggle-slider"></span>
-            </label>
-          </div>
-        </h2>
-        <div class="camera-block">
-          <video id="cameraFeed" class="camera-feed" loop muted playsinline>
-            <source src="{{ url_for('static', filename='videos/camera_placeholder.mp4') }}" type="video/mp4">
-            카메라 피드 영역
-          </video>
-        </div>
-      </section>
+  <div class="container">
+    
+    <!-- TEXT SECTION -->
+    <div class="content-wrap">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        ROBOT PATH PLANNING
       </div>
+      
+      <!-- 메인 타이틀 (로고 포함) -->
+      <h1 class="main-title">
+        <!-- Logo SVG -->
+        <svg class="title-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44.02 46.67">
+          <path d="M21.36,0h0a7.69,7.69,0,0,0-7.69,7.69,7.16,7.16,0,0,0,1,3.79,45.56,45.56,0,0,0,5.13,6.68l1.56,1.68,1.57-1.68a45.56,45.56,0,0,0,5.13-6.68,7.16,7.16,0,0,0,1-3.79A7.69,7.69,0,0,0,21.36,0Zm0,10.63h0a3.18,3.18,0,1,1,0-6.36h0a3.18,3.18,0,1,1,0,6.36Z"/>
+          <circle cx="12.18" cy="43.04" r="3.63"/>
+          <circle cx="30.89" cy="43.04" r="3.63"/>
+          <path d="M39.53,22.22h-35A4.48,4.48,0,0,0,0,26.71V38.55A4.48,4.48,0,0,0,4.49,43H6.77a5.41,5.41,0,0,1,10.82,0h7.89A5.41,5.41,0,1,1,36.3,43h3.23A4.49,4.49,0,0,0,44,38.55V26.71A4.49,4.49,0,0,0,39.53,22.22ZM16.22,31.85a.58.58,0,0,1-.58-.58c0-1.46-.86-2.69-1.88-2.69s-1.89,1.23-1.89,2.69a.58.58,0,1,1-1.16,0c0-2.12,1.37-3.85,3-3.85s3,1.73,3,3.85A.58.58,0,0,1,16.22,31.85Zm5.14,4c-1.79,0-3.2-.93-3.2-2.12a.58.58,0,0,1,1.16,0c0,.39.8,1,2,1s2.05-.57,2.05-1a.58.58,0,0,1,1.16,0C24.57,35,23.16,35.89,21.36,35.89Zm10.83-4a.58.58,0,0,1-.58-.58c0-1.46-.86-2.69-1.88-2.69s-1.89,1.23-1.89,2.69a.58.58,0,0,1-1.16,0c0-2.12,1.37-3.85,3.05-3.85s3,1.73,3,3.85A.58.58,0,0,1,32.19,31.85Z"/>
+        </svg>
+        <span class="gradient-text">RUN ROPET</span>
+      </h1>
 
-      <!-- 2행: 지도 iframe, 스텝4 (높이 2/3, 2열) -->
-      <div class="row row-2">
-      <section class="panel" id="naverMapSection" style="padding: 0; position: relative;">
-        <button class="link-copy-btn" id="copyLinkBtn" title="새 브라우저에서 열기 및 링크 복사">새 브라우저에서 열기</button>
-        <iframe id="naverMapFrame" src="https://map.naver.com/p/directions" style="width:100%; height:100%; border-radius:18px; border: none;"></iframe>
-      </section>
+      <!-- 서브 타이틀 -->
+      <h2 class="sub-title">
+        <span style="color: white;">YOUR PET ROBOT,</span><br>
+        <span style="color: var(--primary)">ANYWHERE YOU WANT</span>
+      </h2>
 
-      <section class="panel" id="step4">
-        <h2>
-          STEP 04 로봇 실행
-        </h2>
-        <div class="command-list" id="executionCommandsList">
-          <p>경로 실행 상황이 여기에 표시됩니다.</p>
-        </div>
-      </section>
+      <p class="desc">
+        펫로봇을 RUN ROPET에 연동하고 목적지를 지정하세요.<br>
+        <strong>실시간 경로 계획 명령</strong>으로 심부름도, 배달도 가능합니다.<br>
+        네이버 지도 기반 스마트 자율주행 솔루션.
+      </p>
+      
+      <div class="btn-group">
+        <a href="/dashboard" class="cta-btn">
+          <span>START DRIVING <i class="fas fa-location-arrow"></i></span>
+        </a>
       </div>
     </div>
-  </main>
 
-  <!-- Scale Modal -->
-  <div class="modal" id="scaleModal">
-    <div class="modal-card">
-      <button class="modal-close-btn" id="scaleModalCloseBtn">&times;</button>
-      <div class="toggle">
-        <button data-mode="scale" class="{{ 'active' if settings.mode == 'scale' else '' }}">SCALE ↓</button>
-        <button data-mode="real" class="{{ 'active' if settings.mode == 'real' else '' }}">REAL</button>
-      </div>
-      <div id="scaleInputs" class="mode-panel">
-        <label class="modal-section-title">로봇 속도 (m/s)</label>
-        <input type="number" step="0.01" id="modalScaleSpeed" value="{{ settings.scale_speed }}" placeholder="0.1">
-        <label class="modal-section-title">가용 면적 입력 (m)</label>
-        <div class="modal-grid">
-          <div class="modal-input-inline">
-            <span class="modal-label-inline">길<br>이</span>
-            <input type="number" step="0.1" id="modalWidth" value="{{ settings.scale_width }}" placeholder="0">
-          </div>
-          <div class="modal-input-inline">
-            <span class="modal-label-inline">너<br>비</span>
-            <input type="number" step="0.1" id="modalHeight" value="{{ settings.scale_height }}" placeholder="0">
-          </div>
+    <!-- ROBOT VISUAL SECTION -->
+    <div class="visual-area" id="visualArea">
+      <!-- Hologram Floor -->
+      <div class="holo-base"></div>
+      
+      <!-- HUD Elements -->
+      <div class="hud-ring ring-1"></div>
+      <div class="hud-ring ring-2"></div>
+      
+      <!-- Robot Container -->
+      <div class="robot-container">
+        <!-- Scanning Beam Effect -->
+        <div class="scan-beam"></div>
+
+        <!-- Hologram Pin (Restored & Floated above robot) -->
+        <div class="hologram-pin">
+          <svg width="60" height="80" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 20 0 C 9 0 0 9 0 20 C 0 35 20 60 20 60 C 20 60 40 35 40 20 C 40 9 31 0 20 0 Z" fill="url(#pinGradient)"/>
+            <circle cx="20" cy="20" r="8" fill="white"/>
+            <defs>
+              <linearGradient id="pinGradient" x1="0" y1="0" x2="40" y2="60" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#00d4ff"/>
+                <stop offset="1" stop-color="#00c768"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
+
+        <!-- Re-using the Original Robot SVG but polished -->
+        <svg class="robot-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#94a3b8"/>
+              </linearGradient>
+              <linearGradient id="glassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#1e293b"/>
+                <stop offset="50%" stop-color="#0f172a"/>
+                <stop offset="100%" stop-color="#00f2ff"/>
+              </linearGradient>
+              <filter id="glowFilter">
+                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <linearGradient id="eyeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00d4ff"/>
+                <stop offset="100%" stop-color="#00c768"/>
+              </linearGradient>
+              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+    
+            <!-- Robot Body -->
+            <g id="robot-group">
+              <!-- Wheels -->
+              <g transform="translate(160, 380)"><circle cx="0" cy="0" r="35" fill="#334155"/></g>
+              <g transform="translate(340, 380)"><circle cx="0" cy="0" r="35" fill="#334155"/></g>
+              
+              <!-- Main Shell -->
+              <path d="M 100 280 L 400 280 L 390 120 Q 385 80 340 80 L 160 80 Q 115 80 110 120 Z" fill="url(#bodyGrad)" filter="drop-shadow(0 10px 20px rgba(0,0,0,0.3))"/>
+              <path d="M 120 350 L 380 350 Q 400 350 400 330 L 400 280 L 100 280 L 100 330 Q 100 350 120 350 Z" fill="#475569"/>
+              
+              <!-- Glowing Stripe -->
+              <path d="M 110 200 L 390 200" stroke="var(--primary)" stroke-width="6" stroke-linecap="round" filter="url(#glowFilter)" opacity="0.9"/>
+    
+              <!-- Face Screen -->
+              <g transform="translate(250, 160)">
+                <rect x="-110" y="-50" width="220" height="90" rx="20" fill="url(#glassGrad)" stroke="#334155" stroke-width="2"/>
+                
+                <!-- Restored Cute Eyes (From Original) -->
+                <g id="eyes" style="animation: eyeBlink 4s infinite;">
+                  <!-- 왼쪽 눈 -->
+                  <g transform="translate(-50, -5)">
+                    <ellipse cx="0" cy="0" rx="18" ry="22" fill="url(#eyeGradient)" filter="url(#glow)"/>
+                    <!-- 하이라이트 -->
+                    <circle cx="5" cy="-8" r="4" fill="white" opacity="0.8"/>
+                  </g>
+                  <!-- 오른쪽 눈 -->
+                  <g transform="translate(50, -5)">
+                    <ellipse cx="0" cy="0" rx="18" ry="22" fill="url(#eyeGradient)" filter="url(#glow)"/>
+                    <!-- 하이라이트 -->
+                    <circle cx="5" cy="-8" r="4" fill="white" opacity="0.8"/>
+                  </g>
+                </g>
+
+                <!-- 입 (디지털 스마일) -->
+                <path d="M -20 25 Q 0 35 20 25" fill="none" stroke="var(--secondary)" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+              </g>
+            </g>
+          </svg>
       </div>
-      <div id="realInputs" class="mode-panel" style="display:none;">
-        <label class="modal-section-title">로봇 속도 (m/s)</label>
-        <input type="number" step="0.01" id="modalRealSpeed" value="{{ settings.real_speed }}" placeholder="0.2">
-        <div class="alert-text">횡단보도 구간 주의!!!</div>
-        <div class="alert-sub">횡단보도 인식이 아직 탑재되지 않았습니다.</div>
-      </div>
-      <button class="primary" id="scaleSaveBtn">저장</button>
     </div>
   </div>
 
-  <!-- Test Modal -->
-  <div class="modal" id="testModal">
-    <div class="modal-card">
-      <p id="testModalText">전진 30cm 토픽이 발행되었습니다.</p>
-      <button class="primary modal-close">확인</button>
-    </div>
-  </div>
-
-  <!-- Help Modal -->
-  <div class="modal" id="helpModal">
-    <div class="modal-card help-modal-card">
-      <button class="modal-close-btn" id="helpModalCloseBtn">&times;</button>
-      <h2 style="color: var(--blue); margin-bottom: 24px; font-size: 28px; font-weight: 700;">사용 설명</h2>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script>
+    // === Dynamic Warp Center (Robot Position) ===
+    function updateWarpCenter() {
+      const visualArea = document.getElementById('visualArea');
+      const warpContainer = document.getElementById('warpContainer');
       
-      <!-- 로봇 PC 설치 필수 파일 -->
-      <div class="help-required-box">
-        <div class="help-required-title">
-          <i class="fas fa-exclamation-triangle" style="color: #ff9800; margin-right: 8px;"></i>
-          <strong>로봇 PC에 설치 필수 파일 (2개)</strong>
-        </div>
-        <div class="help-required-files">
-          <a href="/api/download-robot-test" class="help-required-file" download>test_move_command.py</a>
-          <span class="help-required-separator">+</span>
-          <a href="/api/download-robot-move" class="help-required-file" download>move_full_path.py</a>
-        </div>
-        <p class="help-required-note">
-          위 2개 파일을 <code>~/robot_ws/src/move_turtle/</code> 경로에 복사해야 RUN ROPET에서 원격 조종이 가능합니다.
-        </p>
-      </div>
-      
-      <!-- 다운로드 파일 설명 -->
-      <div class="help-section">
-        <h3 class="help-section-title">
-          <i class="fas fa-download" style="color: var(--blue); margin-right: 8px;"></i>
-          다운로드 파일
-        </h3>
+      if (visualArea && warpContainer) {
+        const rect = visualArea.getBoundingClientRect();
+        // 로봇(Visual Area)의 중심 좌표 계산
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
         
-        <div class="help-item">
-          <div class="help-item-header">
-            <span class="help-badge">STEP 02</span>
-            <strong class="help-file-name">move_path.py</strong>
-          </div>
-          <p class="help-description">
-            RUN ROPET 없이 별도로 테스트해볼 수 있는 파일입니다. 해당 파일을 설치하지 않아도 RUN ROPET에서 원격으로 조종이 가능합니다.
-          </p>
-        </div>
+        warpContainer.style.setProperty('--center-x', `${centerX}px`);
+        warpContainer.style.setProperty('--center-y', `${centerY}px`);
+      }
+    }
 
-        <div class="help-item">
-          <div class="help-item-header">
-            <span class="help-badge">STEP 03</span>
-            <strong class="help-file-name">test_move_command.py</strong>
-          </div>
-          <p class="help-description">
-            로봇 연결 테스트용 파일입니다. <strong>로봇 PC에 설치</strong> 후 실행하면 30cm 직진 동작을 수행합니다.
-          </p>
-        </div>
+    // 초기 실행 및 리사이즈 이벤트 등록
+    window.addEventListener('load', updateWarpCenter);
+    window.addEventListener('resize', updateWarpCenter);
+    // 레이아웃 변경에 대비해 주기적으로 위치 보정 (Parallax 움직임 등 고려)
+    setInterval(updateWarpCenter, 100); 
 
-        <div class="help-item">
-          <div class="help-item-header">
-            <span class="help-badge">STEP 03</span>
-            <strong class="help-file-name">move_full_path.py</strong>
-          </div>
-          <p class="help-description">
-            전체 경로 실행용 파일입니다. <strong>로봇 PC에 설치</strong> 후 "주행 시작" 버튼 클릭 시 원격으로 실행됩니다.
-          </p>
-        </div>
-      </div>
+    // === Warp Speed Line Generator ===
+    const warpContainer = document.getElementById('warpContainer');
+    const lineCount = 40; // 라인 수 증가
+    const colors = ['#00f2ff']; // Only Light Blue (Cyan)
 
-      <!-- 사용 환경 -->
-      <div class="help-section">
-        <h3 class="help-section-title">
-          <i class="fas fa-server" style="color: var(--blue); margin-right: 8px;"></i>
-          사용 환경
-        </h3>
-        <div class="help-env-box">
-          <div class="help-env-item">
-            <strong>로봇 PC:</strong> ROS2 (Humble/Foxy), Python 3.8+
-          </div>
-          <div class="help-env-item">
-            <strong>로컬 PC:</strong> Python 3.8+, 웹 브라우저
-          </div>
-        </div>
-      </div>
+    for (let i = 0; i < lineCount; i++) {
+      const line = document.createElement('div');
+      line.classList.add('warp-line');
+      
+      // Random angle
+      const angle = Math.random() * 360;
+      line.style.setProperty('--angle', `${angle}deg`);
+      
+      // Only Light Blue
+      const color = colors[0];
+      line.style.background = `linear-gradient(90deg, transparent, ${color}, transparent)`;
+      line.style.color = color; // for box-shadow
+      
+      // Random delay & duration for chaos
+      line.style.animationDelay = `${Math.random() * 2}s`;
+      line.style.animationDuration = `${1.5 + Math.random() * 1.5}s`; // 부드럽게 흐르도록 수정
+      
+      warpContainer.appendChild(line);
+    }
 
-      <!-- 폴더 구조 -->
-      <div class="help-section">
-        <h3 class="help-section-title">
-          <i class="fas fa-folder-tree" style="color: var(--blue); margin-right: 8px;"></i>
-          로봇 PC 폴더 구조
-        </h3>
-        <div class="help-code-box">
-          <code>
-            ~/robot_ws/src/move_turtle/<br>
-            ├── test_move_command.py<br>
-            └── move_full_path.py
-          </code>
-        </div>
-        <p class="help-note">
-          <i class="fas fa-info-circle" style="color: var(--blue); margin-right: 6px;"></i>
-          <strong>중요:</strong> STEP 03에서 다운로드한 2개 파일만 위 경로에 복사하면 됩니다. 나머지 파일들은 서버에서 제공됩니다.
-        </p>
-      </div>
+    // === Star/Particle Generator (3D effect) ===
+    const particlesContainer = document.getElementById('particles');
+    const particleCount = 50;
 
-      <!-- 사용 프로세스 -->
-      <div class="help-section">
-        <h3 class="help-section-title">
-          <i class="fas fa-list-ol" style="color: var(--blue); margin-right: 8px;"></i>
-          사용 프로세스
-        </h3>
-        <div class="help-process">
-          <div class="help-process-step">
-            <span class="help-step-number">1</span>
-            <div class="help-step-content">
-              <strong>STEP 01:</strong> 출발지/도착지 입력 후 "경로 생성" 클릭
-            </div>
-          </div>
-          <div class="help-process-step">
-            <span class="help-step-number">2</span>
-            <div class="help-step-content">
-              <strong>STEP 02:</strong> 생성된 경로 확인 후 <code>move_path.py</code> 다운로드 (선택사항)
-            </div>
-          </div>
-          <div class="help-process-step">
-            <span class="help-step-number">3</span>
-            <div class="help-step-content">
-              <strong>STEP 03:</strong> 
-              <ul style="margin: 8px 0 0 20px; padding: 0;">
-                <li>로봇 정보 입력 후 "로봇 연동" 클릭</li>
-                <li><code>test_move_command.py</code>, <code>move_full_path.py</code> 다운로드</li>
-                <li>다운로드한 파일을 로봇 PC의 <code>~/robot_ws/src/move_turtle/</code> 경로에 복사</li>
-                <li>"TEST" 버튼으로 연결 확인</li>
-                <li>"주행 시작" 버튼으로 경로 실행</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+    for (let i = 0; i < particleCount; i++) {
+      const p = document.createElement('div');
+      p.classList.add('particle');
+      const size = Math.random() * 3 + 1;
+      p.style.width = `${size}px`;
+      p.style.height = `${size}px`;
+      
+      // Random position around center
+      p.style.left = '50%';
+      p.style.top = '50%';
+      
+      // Random trajectory
+      const tx = (Math.random() - 0.5) * window.innerWidth * 1.5 + 'px';
+      const ty = (Math.random() - 0.5) * window.innerHeight * 1.5 + 'px';
+      p.style.setProperty('--tx', tx);
+      p.style.setProperty('--ty', ty);
+      
+      p.style.animationDelay = `${Math.random() * 3}s`;
+      particlesContainer.appendChild(p);
+    }
+
+    // === Mouse Parallax Effect (Dynamic Background) ===
+    document.addEventListener('mousemove', (e) => {
+      const x = (window.innerWidth / 2 - e.pageX) / 20;
+      const y = (window.innerHeight / 2 - e.pageY) / 20;
+      
+      const visualArea = document.getElementById('visualArea');
+      // 로봇은 반대로 움직임
+      visualArea.style.transform = `translateX(${x}px) translateY(${y + 50}px)`; /* 기본 translateY(50px) 유지하면서 움직임 */
+      
+      // 그리드는 마우스를 따라 기울어짐
+      const grid = document.querySelector('.cyber-grid');
+      grid.style.transform = `rotateX(75deg) rotateZ(${x * 0.5}deg)`;
+    });
+
+    // === Contact Modal ===
+    function openContactModal() {
+      document.getElementById('contactModal').style.display = 'flex';
+    }
+
+    function closeContactModal() {
+      document.getElementById('contactModal').style.display = 'none';
+    }
+
+    // 모달 외부 클릭 시 닫기
+    document.getElementById('contactModal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeContactModal();
+      }
+    });
+  </script>
+
+  <!-- Footer -->
+  <footer class="footer-bar">
+    <div class="footer-content">
+      <span class="footer-copyright">RUN ROPET</span>
+      <span class="footer-separator">|</span>
+      <span class="footer-planner">기획자: 원영</span>
+      <span class="footer-separator">|</span>
+      <button class="footer-contact-btn" onclick="openContactModal()">
+        CONTACT
+      </button>
+    </div>
+  </footer>
+
+  <!-- Contact Modal -->
+  <div id="contactModal" class="contact-modal">
+    <div class="contact-modal-content">
+      <button class="contact-modal-close" onclick="closeContactModal()">&times;</button>
+      <img src="/static/img/contect.png" alt="Contact" class="contact-image">
     </div>
   </div>
-
-  <!-- Link Copy Guide Modal -->
-  <div class="modal" id="linkCopyModal">
-    <div class="modal-card">
-      <div class="alert-text">링크 복사 안내</div>
-      <div class="alert-sub" style="text-align: left; margin-top: 16px;">
-        iframe 내부의 실제 경로 URL을 복사하려면:<br><br>
-        <strong>방법 1:</strong> iframe 내부 네이버 지도에서<br>
-        &nbsp;&nbsp;→ 상단 "공유" 버튼 클릭<br>
-        &nbsp;&nbsp;→ 링크 복사<br><br>
-        <strong>방법 2:</strong> 브라우저 주소창에서<br>
-        &nbsp;&nbsp;→ 네이버 지도를 새 탭에서 열기<br>
-        &nbsp;&nbsp;→ 주소창의 URL 복사<br><br>
-        <strong>현재 복사된 URL:</strong><br>
-        <code id="copiedUrl" style="display: block; margin-top: 8px; padding: 8px; background: #f5f8ff; border-radius: 8px; word-break: break-all; font-size: 12px;"></code>
-      </div>
-      <button class="primary modal-close" style="margin-top: 20px;">확인</button>
-    </div>
-  </div>
-
-  <script src="{{ url_for('static', filename='js/app.js') }}?v={{ cache_bust }}"></script>
 </body>
-
 </html>
 
