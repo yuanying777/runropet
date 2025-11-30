@@ -530,7 +530,7 @@
       display: none !important;
     }
 
-    /* PC 버전 (1024px 이상)에서 확실히 모바일 요소 숨김 및 PC 스타일 보호 */
+    /* PC 버전 (1025px 이상)에서 확실히 모바일 요소 숨김 및 PC 스타일 보호 */
     @media (min-width: 1025px) {
       .badge-mobile {
         display: none !important;
@@ -835,7 +835,7 @@
       transform: translateY(-2px);
     }
 
-    /* 모바일 대응 */
+    /* 모바일 대응 (태블릿 포함, 가로폭 기준) */
     @media (max-width: 1024px) {
       .container { 
         grid-template-columns: 1fr; 
@@ -1053,6 +1053,7 @@
       }
     }
 
+    /* 스마트폰 세로 모드 (긴 화면 기준 - 갤럭시 S20 등) */
     @media (max-width: 768px) {
       /* 모바일 가로/세로 고정 */
       html {
@@ -1127,6 +1128,7 @@
         position: relative;
       }
 
+      /* 긴 화면용 기본 마진 설정 */
       .content-wrap {
         padding: 0 1rem 0.5rem;
         width: 100%;
@@ -1137,7 +1139,7 @@
         text-align: center;
         box-sizing: border-box;
         order: 2;
-        margin-top: 150px;
+        margin-top: 150px; /* 긴 화면 기준 */
         position: relative;
         z-index: 2;
       }
@@ -1150,6 +1152,7 @@
         padding: 1rem 0;
         position: relative;
         z-index: 2;
+        transform: translateY(125px); /* 긴 화면 기준 */
       }
 
       .visual-area .holo-base,
@@ -1179,21 +1182,6 @@
         display: none !important;
       }
 
-      .badge-mobile {
-        display: inline-flex !important;
-        order: 2 !important;
-        position: fixed !important;
-        left: 50% !important;
-        top: 50% !important;
-        transform: translateX(-50%) translateY(-175px) !important;
-        z-index: 2 !important;
-        margin: 0 !important;
-      }
-
-      .visual-area .badge-mobile {
-        display: none !important;
-      }
-
       .visual-area svg,
       .visual-area .robot-container {
         order: 1 !important;
@@ -1212,10 +1200,11 @@
         transform: translateX(-50%) !important;
       }
 
+      /* 긴 화면용 기본 마진 설정 */
       .btn-group-mobile {
         display: flex !important;
         order: 4 !important;
-        margin: calc(2rem + 80px) auto 2rem !important;
+        margin: calc(2rem + 80px) auto 2rem !important; /* 긴 화면 기준 */
         width: 100% !important;
         padding: 0 1rem !important;
         justify-content: center !important;
@@ -1257,6 +1246,47 @@
       .contact-image {
         max-width: 90vw;
         max-height: 70vh;
+      }
+    }
+
+    /* === 짧은 화면 (갤럭시 S8 등) 최적화 === */
+    @media (max-width: 768px) and (max-height: 750px) {
+      /* 전체 컨텐츠를 위로 올림 */
+      .content-wrap {
+        margin-top: 60px; /* 기존 80px에서 조금 더 올려서 공간 확보 */
+      }
+
+      /* 배지 위치 상향 조정 (위로 이동) */
+      .badge-mobile {
+        /* 기존 -140px에서 -185px로 변경하여 핀과 겹치지 않게 위로 올림 */
+        transform: translateX(-50%) translateY(-185px) !important; 
+      }
+
+      /* 로봇 애니메이션 영역 하향 조정 (아래로 이동) */
+      .visual-area {
+        /* 기존 85px에서 115px로 변경하여 아래로 30px 추가 이동 */
+        transform: translateY(115px); 
+        margin-top: 0.5rem; 
+        margin-bottom: 1rem;
+      }
+
+      /* 로봇 크기 유지 (220px) */
+      .visual-area .robot-container {
+        max-width: 220px !important; 
+      }
+
+      /* 버튼 그룹 하향 조정 (아래로 이동) */
+      .btn-group-mobile {
+        /* 마진을 늘려서 버튼을 아래로 밀어냄 */
+        margin: calc(1rem + 75px) auto 1.5rem !important; 
+      }
+
+      /* 타이틀 및 서브타이틀 간격 조정 */
+      h1.main-title {
+        margin-bottom: 0.5rem;
+      }
+      h2.sub-title {
+        margin-bottom: 1rem;
       }
     }
   </style>
@@ -1642,4 +1672,3 @@
   </script>
 </body>
 </html>
-
