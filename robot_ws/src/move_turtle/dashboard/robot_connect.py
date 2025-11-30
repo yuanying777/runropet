@@ -132,7 +132,7 @@ def _run_remote_command(robot_ip: str, username: str, password: str, command: st
                 pass
 
 
-def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: int = 3, ssh_port: int = 22) -> Tuple[bool, str, str]:
+def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: int = 3) -> Tuple[bool, str, str]:
     """
     Run the robot bringup launch file remotely.
 
@@ -141,8 +141,8 @@ def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: 
         username: SSH username
         password: SSH password
         domain_id: ROS_DOMAIN_ID (default: 3)
-        ssh_port: SSH port (default: 22)
     """
+    ssh_port = 22  # 항상 22 포트 사용
     # 1) 중복 실행 방지: 이미 실행 중이면 바로 리턴
     is_running, status_out, status_err = check_bringup_status(robot_ip, username, password, ssh_port)
     if is_running:
@@ -226,7 +226,7 @@ def connect_and_bringup(robot_ip: str, username: str, password: str, domain_id: 
     return success, out, err
 
 
-def send_test_move(robot_ip: str, username: str, password: str, domain_id: int = 3, ssh_port: int = 22) -> Tuple[bool, str, str]:
+def send_test_move(robot_ip: str, username: str, password: str, domain_id: int = 3) -> Tuple[bool, str, str]:
     """
     Execute the local test_move_command script on the robot to publish a short forward command.
 
@@ -235,8 +235,8 @@ def send_test_move(robot_ip: str, username: str, password: str, domain_id: int =
         username: SSH username
         password: SSH password
         domain_id: ROS_DOMAIN_ID (default: 3)
-        ssh_port: SSH port (default: 22)
     """
+    ssh_port = 22  # 항상 22 포트 사용
     # ROS2 환경 설정 후 test_move_command.py 직접 실행
     cmd = (
         f"export ROS_DOMAIN_ID={domain_id} && "
@@ -341,7 +341,7 @@ def start_move_full_path(robot_ip: str, username: str, password: str, domain_id:
     return _run_remote_command(robot_ip, username, password, cmd, ssh_port)
 
 
-def upload_json_file(robot_ip: str, username: str, password: str, json_data: Dict, remote_path: str, ssh_port: int = 22) -> Tuple[bool, str, str]:
+def upload_json_file(robot_ip: str, username: str, password: str, json_data: Dict, remote_path: str) -> Tuple[bool, str, str]:
     """
     Upload JSON data to remote robot via SFTP.
 
@@ -351,11 +351,11 @@ def upload_json_file(robot_ip: str, username: str, password: str, json_data: Dic
         password: SSH password
         json_data: JSON data to upload (dict)
         remote_path: Remote file path (e.g., "/tmp/walking_route.json")
-        ssh_port: SSH port (default: 22)
 
     Returns:
         (success, stdout, stderr)
     """
+    ssh_port = 22  # 항상 22 포트 사용
     ssh = None
     try:
         ssh = paramiko.SSHClient()

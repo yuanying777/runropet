@@ -254,23 +254,19 @@ def connect_robot():
     username = data.get("username")
     password = data.get("password")
     domain_id = data.get("domain_id", 3)
-    ssh_port = data.get("ssh_port", 22)
+    ssh_port = 22  # 항상 22 포트 사용
 
     if not all([robot_ip, username, password]):
         return jsonify({"status": "error", "message": "로봇 IP, ID, PW를 모두 입력하세요."}), 400
 
-    # domain_id와 ssh_port를 정수로 변환
+    # domain_id를 정수로 변환
     try:
         domain_id = int(domain_id) if domain_id else 3
     except (ValueError, TypeError):
         domain_id = 3
-    
-    try:
-        ssh_port = int(ssh_port) if ssh_port else 22
-    except (ValueError, TypeError):
-        ssh_port = 22
 
-    success, out, err = connect_and_bringup(robot_ip, username, password, domain_id, ssh_port)
+    # 원래 형태: 3개 필수 인자만 전달 (domain_id는 기본값 3 사용, ssh_port는 함수 내부에서 22 사용)
+    success, out, err = connect_and_bringup(robot_ip, username, password, domain_id=domain_id)
     payload = {"status": "ok" if success else "error", "stdout": out, "stderr": err}
     return jsonify(payload), (200 if success else 500)
 
@@ -282,18 +278,13 @@ def api_check_status():
     robot_ip = data.get("robot_ip")
     username = data.get("username")
     password = data.get("password")
-    ssh_port = data.get("ssh_port", 22)
+    ssh_port = 22  # 항상 22 포트 사용
     
     if not all([robot_ip, username, password]):
         return jsonify({
             "status": "error",
             "message": "로봇 IP, ID, PW를 모두 입력하세요."
         }), 400
-    
-    try:
-        ssh_port = int(ssh_port) if ssh_port else 22
-    except (ValueError, TypeError):
-        ssh_port = 22
     
     try:
         is_running, out, err = check_bringup_status(robot_ip, username, password, ssh_port)
@@ -317,7 +308,7 @@ def test_move():
     username = data.get("username")
     password = data.get("password")
     domain_id = data.get("domain_id", 3)
-    ssh_port = data.get("ssh_port", 22)
+    ssh_port = 22  # 항상 22 포트 사용
 
     if not all([robot_ip, username, password]):
         return jsonify({"status": "error", "message": "로봇 IP, ID, PW를 모두 입력하세요."}), 400
@@ -326,13 +317,8 @@ def test_move():
         domain_id = int(domain_id) if domain_id else 3
     except (ValueError, TypeError):
         domain_id = 3
-    
-    try:
-        ssh_port = int(ssh_port) if ssh_port else 22
-    except (ValueError, TypeError):
-        ssh_port = 22
 
-    success, out, err = send_test_move(robot_ip, username, password, domain_id, ssh_port)
+    success, out, err = send_test_move(robot_ip, username, password, domain_id=domain_id)
     payload = {"status": "ok" if success else "error", "stdout": out, "stderr": err}
     return jsonify(payload), (200 if success else 500)
 
@@ -381,7 +367,7 @@ def start_drive():
     username = data.get("username")
     password = data.get("password")
     domain_id = data.get("domain_id", 3)
-    ssh_port = data.get("ssh_port", 22)
+    ssh_port = 22  # 항상 22 포트 사용
 
     if not all([robot_ip, username, password]):
         return jsonify({"status": "error", "message": "로봇 IP, ID, PW를 모두 입력하세요."}), 400
@@ -390,11 +376,6 @@ def start_drive():
         domain_id = int(domain_id) if domain_id else 3
     except (ValueError, TypeError):
         domain_id = 3
-    
-    try:
-        ssh_port = int(ssh_port) if ssh_port else 22
-    except (ValueError, TypeError):
-        ssh_port = 22
 
     # 모드 확인 (차선도로/도보도로)
     route_mode = session.get("last_route_mode", "car")  # 기본값: car
@@ -420,7 +401,7 @@ def start_drive():
         
         # JSON 파일을 원격에 업로드
         upload_success, upload_out, upload_err = upload_json_file(
-            robot_ip, username, password, json_data, remote_json_path, ssh_port
+            robot_ip, username, password, json_data, remote_json_path
         )
         
         if not upload_success:
@@ -456,7 +437,7 @@ def start_drive():
         
         # JSON 파일을 원격에 업로드
         upload_success, upload_out, upload_err = upload_json_file(
-            robot_ip, username, password, json_data, remote_json_path, ssh_port
+            robot_ip, username, password, json_data, remote_json_path
         )
         
         if not upload_success:
@@ -483,11 +464,12 @@ def stop_drive():
     robot_ip = data.get("robot_ip")
     username = data.get("username")
     password = data.get("password")
+    ssh_port = 22  # 항상 22 포트 사용
 
     if not all([robot_ip, username, password]):
         return jsonify({"status": "error", "message": "로봇 IP, ID, PW를 모두 입력하세요."}), 400
 
-    success, out, err = stop_move_full_path(robot_ip, username, password)
+    success, out, err = stop_move_full_path(robot_ip, username, password, ssh_port=ssh_port)
     payload = {"status": "ok" if success else "error", "stdout": out, "stderr": err}
     return jsonify(payload), (200 if success else 500)
 
